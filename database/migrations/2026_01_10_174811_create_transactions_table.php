@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -13,6 +12,19 @@ return new class extends Migration
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
+
+            // Link to Shop Owner
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+
+            $table->enum('type', ['sale', 'expense']);
+            $table->decimal('amount', 15, 2); // Increased to 15 digits for larger sums
+
+            // Made nullable as requested
+            $table->string('category')->nullable();
+
+            $table->string('description');
+            $table->date('date');
+
             $table->timestamps();
         });
     }
