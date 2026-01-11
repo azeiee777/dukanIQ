@@ -15,12 +15,24 @@
         .animate-fade-in {
             animation: fadeIn 0.3s ease-out forwards;
         }
+
+        /* Hide scrollbar for clean horizontal scrolling on mobile */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
     </style>
 
     <div x-data="{
         showModal: false,
-        transactionType: 'sale'
-    }" class="pb-32 animate-fade-in">
+        transactionType: 'sale',
+        showDateFilters: {{ request('start_date') ? 'true' : 'false' }}
+    }" class="pb-32 animate-fade-in relative min-h-screen">
+
         <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8">
             <div>
                 <h1 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight mb-2">Dashboard</h1>
@@ -42,7 +54,7 @@
             </div>
 
             <div
-                class="bg-white dark:bg-slate-800 p-1.5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 inline-flex">
+                class="bg-white dark:bg-slate-800 p-1.5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 inline-flex flex-wrap gap-1">
                 @foreach (['all' => 'All Time', 'month' => 'This Month', 'today' => 'Today'] as $key => $label)
                     <a href="{{ route('dashboard', ['date' => $key, 'type' => request('type'), 'category' => request('category')]) }}"
                         wire:navigate
@@ -53,11 +65,23 @@
                         {{ $label }}
                     </a>
                 @endforeach
+
+                <button @click="showDateFilters = !showDateFilters"
+                    :class="showDateFilters ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' :
+                        'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'"
+                    class="px-4 py-2 text-xs font-bold rounded-xl transition-all duration-200 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                        </path>
+                    </svg>
+                    Range
+                </button>
             </div>
         </div>
 
-        <div
-            class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm mb-8">
+        <div x-show="showDateFilters" style="display: none;"
+            class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm mb-8 mt-2 animate-fade-in">
             <form method="GET" action="{{ route('dashboard') }}" class="flex flex-col sm:flex-row gap-4 items-end">
                 <input type="hidden" name="type" value="{{ request('type', 'all') }}">
                 <input type="hidden" name="category" value="{{ request('category', 'all') }}">
@@ -107,10 +131,6 @@
                                 d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
-                    @if ($stats['income'] > 0)
-                        <span
-                            class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800/30">Income</span>
-                    @endif
                 </div>
                 <div>
                     <p class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Total
@@ -131,10 +151,6 @@
                                 d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
-                    @if ($stats['expense'] > 0)
-                        <span
-                            class="px-3 py-1 rounded-full text-xs font-bold bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-800/30">Spent</span>
-                    @endif
                 </div>
                 <div>
                     <p class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Total
@@ -149,7 +165,6 @@
                 <div
                     class="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-white/10 blur-2xl group-hover:bg-white/20 transition-all duration-500">
                 </div>
-
                 <div class="flex justify-between items-start mb-6 relative z-10">
                     <div class="bg-white/20 p-3.5 rounded-2xl backdrop-blur-sm">
                         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -171,58 +186,71 @@
             </div>
         </div>
 
-        <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-6">
-            <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                Recent Transactions
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2 whitespace-nowrap">
+                Transactions
                 <span
-                    class="text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-1 rounded-full">{{ count($transactions) }}</span>
+                    class="text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-500 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700">{{ count($transactions) }}</span>
             </h2>
 
-            <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-                <div
-                    class="flex bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                    <a href="{{ route('dashboard', array_merge(request()->except('type'), ['type' => 'all'])) }}"
-                        wire:navigate
-                        class="px-3 py-1.5 text-xs font-bold uppercase rounded-lg transition-all {{ $currentFilters['type'] === 'all' ? 'bg-slate-900 dark:bg-indigo-600 text-white' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700' }}">
-                        All
-                    </a>
-                    <a href="{{ route('dashboard', array_merge(request()->except('type'), ['type' => 'sale'])) }}"
-                        wire:navigate
-                        class="px-3 py-1.5 text-xs font-bold uppercase rounded-lg transition-all {{ $currentFilters['type'] === 'sale' ? 'bg-emerald-500 text-white' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700' }}">
-                        Income
-                    </a>
-                    <a href="{{ route('dashboard', array_merge(request()->except('type'), ['type' => 'expense'])) }}"
-                        wire:navigate
-                        class="px-3 py-1.5 text-xs font-bold uppercase rounded-lg transition-all {{ $currentFilters['type'] === 'expense' ? 'bg-rose-500 text-white' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700' }}">
-                        Expense
+            <div class="w-full md:w-auto overflow-x-auto no-scrollbar pb-1">
+                <div class="flex items-center gap-2 min-w-max">
+                    <div
+                        class="bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm inline-flex">
+                        <a href="{{ route('dashboard', array_merge(request()->except('type'), ['type' => 'all'])) }}"
+                            wire:navigate
+                            class="px-4 py-2 text-xs font-bold uppercase rounded-lg transition-all {{ $currentFilters['type'] === 'all' ? 'bg-slate-900 dark:bg-indigo-600 text-white shadow' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700' }}">
+                            All
+                        </a>
+                        <a href="{{ route('dashboard', array_merge(request()->except('type'), ['type' => 'sale'])) }}"
+                            wire:navigate
+                            class="px-4 py-2 text-xs font-bold uppercase rounded-lg transition-all {{ $currentFilters['type'] === 'sale' ? 'bg-emerald-500 text-white shadow' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700' }}">
+                            Income
+                        </a>
+                        <a href="{{ route('dashboard', array_merge(request()->except('type'), ['type' => 'expense'])) }}"
+                            wire:navigate
+                            class="px-4 py-2 text-xs font-bold uppercase rounded-lg transition-all {{ $currentFilters['type'] === 'expense' ? 'bg-rose-500 text-white shadow' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700' }}">
+                            Expense
+                        </a>
+                    </div>
+
+                    @if ($currentFilters['type'] === 'expense')
+                        <div class="relative">
+                            <select
+                                onchange="window.location.href = '{{ route('dashboard') }}?' + new URLSearchParams({...Object.fromEntries(new URLSearchParams(window.location.search)), category: this.value})"
+                                class="appearance-none pl-4 pr-10 py-2.5 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:border-indigo-500 focus:ring-0 shadow-sm cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors h-[42px]">
+                                <option value="all" {{ request('category', 'all') === 'all' ? 'selected' : '' }}>
+                                    All Categories</option>
+                                <option value="Rent" {{ request('category') === 'Rent' ? 'selected' : '' }}>Rent
+                                </option>
+                                <option value="Inventory" {{ request('category') === 'Inventory' ? 'selected' : '' }}>
+                                    Inventory</option>
+                                <option value="Utilities" {{ request('category') === 'Utilities' ? 'selected' : '' }}>
+                                    Utilities</option>
+                                <option value="Salary" {{ request('category') === 'Salary' ? 'selected' : '' }}>Salary
+                                </option>
+                                <option value="Other" {{ request('category') === 'Other' ? 'selected' : '' }}>Other
+                                </option>
+                            </select>
+                            <div
+                                class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    @endif
+
+                    <a href="{{ route('transactions.export', request()->all()) }}"
+                        class="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-indigo-600 dark:hover:text-indigo-400 shadow-sm transition-all h-[42px]">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                        Export
                     </a>
                 </div>
-
-                @if ($currentFilters['type'] === 'expense')
-                    <select
-                        onchange="window.location.href = '{{ route('dashboard') }}?' + new URLSearchParams({...Object.fromEntries(new URLSearchParams(window.location.search)), category: this.value})"
-                        class="px-4 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-white focus:border-indigo-500 focus:ring-0">
-                        <option value="all" {{ request('category', 'all') === 'all' ? 'selected' : '' }}>All
-                            Categories</option>
-                        <option value="Rent" {{ request('category') === 'Rent' ? 'selected' : '' }}>Rent</option>
-                        <option value="Inventory" {{ request('category') === 'Inventory' ? 'selected' : '' }}>Inventory
-                        </option>
-                        <option value="Utilities" {{ request('category') === 'Utilities' ? 'selected' : '' }}>
-                            Utilities</option>
-                        <option value="Salary" {{ request('category') === 'Salary' ? 'selected' : '' }}>Salary
-                        </option>
-                        <option value="Other" {{ request('category') === 'Other' ? 'selected' : '' }}>Other</option>
-                    </select>
-                @endif
-
-                <a href="{{ route('transactions.export', request()->all()) }}"
-                    class="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700 transition-all">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                    </svg>
-                    Export
-                </a>
             </div>
         </div>
 
@@ -319,7 +347,7 @@
         </div>
 
         <button @click="showModal = true"
-            class="fixed bottom-8 right-8 z-30 flex items-center gap-3 px-6 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-2xl shadow-indigo-500/40 hover:scale-105 transition-all duration-300 group">
+            class="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-6 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-2xl shadow-indigo-500/40 hover:scale-105 transition-all duration-300 group">
             <svg class="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" fill="none"
                 stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
@@ -327,10 +355,10 @@
             <span class="font-bold text-sm tracking-wide">New Entry</span>
         </button>
 
-        <div x-show="showModal" style="display: none;" class="relative z-50">
+        <div x-show="showModal" style="display: none;" class="relative z-[60]">
             <div x-show="showModal" x-transition.opacity class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
 
-            <div class="fixed inset-0 z-50 overflow-y-auto">
+            <div class="fixed inset-0 z-[60] overflow-y-auto">
                 <div class="flex min-h-full items-center justify-center p-4">
                     <div x-show="showModal" x-transition:enter="transition ease-out duration-300"
                         x-transition:enter-start="opacity-0 translate-y-4 scale-95"

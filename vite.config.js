@@ -8,4 +8,6 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    // Remove the 'base' and 'build' blocks. 
+    // The laravel plugin handles this automatically for you.
 });
