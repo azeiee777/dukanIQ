@@ -28,6 +28,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Transactions
     Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
+    Route::put('/transactions/{id}', [TransactionController::class, 'update'])->name('transactions.update');
 
     // Export (Must be defined BEFORE the {id} route if utilizing similar paths, or use a distinct path)
     Route::get('/transactions/export', [TransactionController::class, 'export'])->name('transactions.export');

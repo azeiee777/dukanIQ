@@ -1,4 +1,30 @@
 <x-app-layout>
+    @php
+        $expenseCategories = ['Rent', 'Inventory', 'Utilities', 'Salary', 'Other'];
+        $defaultFormDate = now()->format('Y-m-d');
+        $editingTransaction = null;
+
+        if (old('form_mode') === 'edit' && old('transaction_id')) {
+            $editingTransaction = $transactions->firstWhere('id', (int) old('transaction_id'));
+        }
+
+        $initialForm = [
+            'mode' => old('form_mode', 'create'),
+            'id' => old('transaction_id'),
+            'type' => old('type', $editingTransaction?->type ?? 'sale'),
+            'amount' => old('amount', $editingTransaction ? (string) $editingTransaction->amount : ''),
+            'date' => old('date', $editingTransaction?->date?->format('Y-m-d') ?? $defaultFormDate),
+            'description' => old('description', $editingTransaction?->description ?? ''),
+            'category' => old('category', $editingTransaction?->category ?? 'Sales'),
+        ];
+
+        if (($initialForm['type'] ?? 'sale') === 'sale') {
+            $initialForm['category'] = 'Sales';
+        } elseif (!in_array($initialForm['category'], $expenseCategories, true)) {
+            $initialForm['category'] = $expenseCategories[0];
+        }
+    @endphp
+
     <style>
         @keyframes fadeIn {
             from {
@@ -26,11 +52,83 @@
         }
     </style>
 
-    <div x-data="{
-        showModal: false,
-        transactionType: 'sale',
-        showDateFilters: {{ request('start_date') ? 'true' : 'false' }}
-    }" class="relative min-h-screen">
+    <script>
+        function transactionDashboard(config) {
+            return {
+                showModal: config.openModal,
+                showDateFilters: config.showDateFilters,
+                createUrl: config.createUrl,
+                transactionBaseUrl: config.transactionBaseUrl,
+                expenseCategories: config.expenseCategories,
+                defaultDate: config.defaultDate,
+                form: { ...config.defaultForm },
+                init() {
+                    this.syncCategoryWithType();
+                },
+                openCreateModal() {
+                    this.form = {
+                        mode: 'create',
+                        id: null,
+                        type: 'sale',
+                        amount: '',
+                        date: this.defaultDate,
+                        description: '',
+                        category: 'Sales',
+                    };
+
+                    this.showModal = true;
+                },
+                openEditModal(transaction) {
+                    this.form = {
+                        mode: 'edit',
+                        id: transaction.id,
+                        type: transaction.type,
+                        amount: transaction.amount,
+                        date: transaction.date,
+                        description: transaction.description,
+                        category: transaction.category || (transaction.type === 'expense' ? this.expenseCategories[0] : 'Sales'),
+                    };
+
+                    this.syncCategoryWithType();
+                    this.showModal = true;
+                },
+                closeModal() {
+                    this.showModal = false;
+                },
+                syncCategoryWithType() {
+                    if (this.form.type === 'sale') {
+                        this.form.category = 'Sales';
+                        return;
+                    }
+
+                    if (!this.expenseCategories.includes(this.form.category)) {
+                        this.form.category = this.expenseCategories[0];
+                    }
+                },
+                formAction() {
+                    return this.form.mode === 'edit' && this.form.id
+                        ? `${this.transactionBaseUrl}/${this.form.id}`
+                        : this.createUrl;
+                },
+                modalTitle() {
+                    return this.form.mode === 'edit' ? 'Edit Entry' : 'Add Entry';
+                },
+                submitLabel() {
+                    return this.form.mode === 'edit' ? 'Update Transaction' : 'Save Transaction';
+                },
+            };
+        }
+    </script>
+
+    <div x-data="transactionDashboard({
+        openModal: {{ $errors->any() ? 'true' : 'false' }},
+        showDateFilters: {{ request('start_date') ? 'true' : 'false' }},
+        createUrl: {{ \Illuminate\Support\Js::from(route('transactions.store')) }},
+        transactionBaseUrl: {{ \Illuminate\Support\Js::from(url('/transactions')) }},
+        expenseCategories: {{ \Illuminate\Support\Js::from($expenseCategories) }},
+        defaultDate: {{ \Illuminate\Support\Js::from($defaultFormDate) }},
+        defaultForm: {{ \Illuminate\Support\Js::from($initialForm) }}
+    })" x-init="init()" x-on:keydown.escape.window="closeModal()" class="relative min-h-screen">
 
         <div class="pb-32 animate-fade-in">
             <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8">
@@ -314,19 +412,43 @@
                                 {{ $t->type == 'sale' ? '+' : '-' }}₹{{ number_format($t->amount) }}
                             </span>
 
-                            <form action="{{ route('transactions.destroy', $t->id) }}" method="POST" class="inline"
-                                onsubmit="return confirm('Are you sure?')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit"
-                                    class="p-2 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100">
+                            <div
+                                class="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                                <button type="button"
+                                    @click="openEditModal({{ \Illuminate\Support\Js::from([
+                                        'id' => $t->id,
+                                        'type' => $t->type,
+                                        'amount' => (string) $t->amount,
+                                        'date' => $dateObj->format('Y-m-d'),
+                                        'description' => $t->description,
+                                        'category' => $t->category,
+                                    ]) }})"
+                                    class="p-2 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-all"
+                                    title="Edit entry" aria-label="Edit entry">
+                                    <span class="sr-only">Edit entry</span>
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
                                         </path>
                                     </svg>
                                 </button>
-                            </form>
+
+                                <form action="{{ route('transactions.destroy', $t->id) }}" method="POST"
+                                    class="inline" onsubmit="return confirm('Are you sure?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit"
+                                        class="p-2 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-all"
+                                        title="Delete entry" aria-label="Delete entry">
+                                        <span class="sr-only">Delete entry</span>
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                            </path>
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 @empty
@@ -348,7 +470,7 @@
             </div>
         </div>
 
-        <button @click="showModal = true"
+        <button @click="openCreateModal()"
             class="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-6 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-2xl shadow-indigo-500/40 hover:scale-105 transition-all duration-300 group">
             <svg class="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" fill="none"
                 stroke="currentColor" viewBox="0 0 24 24">
@@ -358,7 +480,8 @@
         </button>
 
         <div x-show="showModal" style="display: none;" class="relative z-[60]">
-            <div x-show="showModal" x-transition.opacity class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+            <div x-show="showModal" x-transition.opacity @click="closeModal()"
+                class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
 
             <div class="fixed inset-0 z-[60] overflow-y-auto">
                 <div class="flex min-h-full items-center justify-center p-4">
@@ -372,8 +495,8 @@
 
                         <div
                             class="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
-                            <h3 class="text-xl font-black text-slate-900 dark:text-white">Add Entry</h3>
-                            <button @click="showModal = false"
+                            <h3 class="text-xl font-black text-slate-900 dark:text-white" x-text="modalTitle()"></h3>
+                            <button @click="closeModal()"
                                 class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -382,20 +505,38 @@
                             </button>
                         </div>
 
-                        <form action="{{ route('transactions.store') }}" method="POST" class="p-8 space-y-6">
+                        @if ($errors->any())
+                            <div
+                                class="mx-8 mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/40 dark:text-rose-200">
+                                <p class="font-bold">Please fix the highlighted details and try again.</p>
+                                <ul class="mt-2 space-y-1">
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+
+                        <form x-bind:action="formAction()" method="POST" class="p-8 space-y-6">
                             @csrf
-                            <input type="hidden" name="type" x-model="transactionType">
+                            <template x-if="form.mode === 'edit'">
+                                <input type="hidden" name="_method" value="PUT">
+                            </template>
+                            <input type="hidden" name="form_mode" :value="form.mode">
+                            <input type="hidden" name="transaction_id" :value="form.id ?? ''">
+                            <input type="hidden" name="type" x-model="form.type">
+                            <input type="hidden" name="category" :value="form.type === 'sale' ? 'Sales' : form.category">
 
                             <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl">
-                                <button type="button" @click="transactionType = 'sale'"
-                                    :class="transactionType === 'sale' ?
+                                <button type="button" @click="form.type = 'sale'; syncCategoryWithType()"
+                                    :class="form.type === 'sale' ?
                                         'bg-white dark:bg-slate-700 text-emerald-600 shadow-sm' :
                                         'text-slate-500 dark:text-slate-400 hover:text-slate-700'"
                                     class="py-3 text-sm font-bold rounded-xl transition-all duration-200">
                                     Income
                                 </button>
-                                <button type="button" @click="transactionType = 'expense'"
-                                    :class="transactionType === 'expense' ?
+                                <button type="button" @click="form.type = 'expense'; syncCategoryWithType()"
+                                    :class="form.type === 'expense' ?
                                         'bg-white dark:bg-slate-700 text-rose-600 shadow-sm' :
                                         'text-slate-500 dark:text-slate-400 hover:text-slate-700'"
                                     class="py-3 text-sm font-bold rounded-xl transition-all duration-200">
@@ -409,7 +550,8 @@
                                 <div class="relative group">
                                     <span
                                         class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-black text-lg group-focus-within:text-indigo-500 transition-colors">₹</span>
-                                    <input type="number" name="amount" required step="0.01" placeholder="0.00"
+                                    <input type="number" name="amount" x-model="form.amount" required step="0.01"
+                                        placeholder="0.00"
                                         class="w-full pl-10 pr-4 py-4 text-2xl font-black rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-0 transition-all placeholder-slate-300">
                                 </div>
                             </div>
@@ -418,37 +560,33 @@
                                 <div>
                                     <label
                                         class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Date</label>
-                                    <input type="date" name="date" value="{{ date('Y-m-d') }}" required
+                                    <input type="date" name="date" x-model="form.date" required
                                         class="w-full px-4 py-3 font-bold rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-0 transition-all">
                                 </div>
                                 <div>
                                     <label
                                         class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Description</label>
-                                    <input type="text" name="description" required
+                                    <input type="text" name="description" x-model="form.description" required
                                         placeholder="What was this for?"
                                         class="w-full px-4 py-3 font-bold rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-0 transition-all placeholder-slate-400">
                                 </div>
                             </div>
 
-                            <div x-show="transactionType === 'expense'" x-transition>
+                            <div x-show="form.type === 'expense'" x-transition>
                                 <label
                                     class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Category</label>
-                                <select name="category"
+                                <select x-model="form.category"
                                     class="w-full px-4 py-3 font-bold rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-0 transition-all">
-                                    <option value="Rent">Rent</option>
-                                    <option value="Inventory">Inventory</option>
-                                    <option value="Utilities">Utilities</option>
-                                    <option value="Salary">Salary</option>
-                                    <option value="Other">Other</option>
+                                    @foreach ($expenseCategories as $expenseCategory)
+                                        <option value="{{ $expenseCategory }}">{{ $expenseCategory }}</option>
+                                    @endforeach
                                 </select>
                             </div>
-                            <input type="hidden" name="category" x-show="transactionType === 'sale'"
-                                value="Sales">
 
                             <div class="pt-2">
                                 <button type="submit"
                                     class="w-full py-4 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 transition-all transform active:scale-[0.98]">
-                                    Save Transaction
+                                    <span x-text="submitLabel()"></span>
                                 </button>
                             </div>
                         </form>

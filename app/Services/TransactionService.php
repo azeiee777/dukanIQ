@@ -8,6 +8,8 @@ use Carbon\Carbon;
 
 class TransactionService
 {
+    private const SALE_CATEGORY = 'Sales';
+
     protected $repository;
 
     public function __construct(TransactionRepositoryInterface $repository)
@@ -58,17 +60,29 @@ class TransactionService
     public function createTransaction(array $data)
     {
         $data['user_id'] = Auth::id();
-
-        // Default category logic if needed, or leave null
-        if ($data['type'] === 'sale' && empty($data['category'])) {
-            $data['category'] = 'Sale';
-        }
+        $data = $this->normalizeTransactionData($data);
 
         return $this->repository->create($data);
+    }
+
+    public function updateTransaction(int $id, array $data)
+    {
+        $data = $this->normalizeTransactionData($data);
+
+        return $this->repository->update($id, $data, Auth::id());
     }
 
     public function deleteTransaction(int $id)
     {
         return $this->repository->delete($id, Auth::id());
+    }
+
+    private function normalizeTransactionData(array $data): array
+    {
+        if ($data['type'] === 'sale') {
+            $data['category'] = self::SALE_CATEGORY;
+        }
+
+        return $data;
     }
 }

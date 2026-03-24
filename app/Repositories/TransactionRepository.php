@@ -31,6 +31,17 @@ class TransactionRepository implements TransactionRepositoryInterface
         return Transaction::create($data);
     }
 
+    public function update(int $id, array $data, int $userId)
+    {
+        $transaction = Transaction::where('id', $id)
+            ->where('user_id', $userId)
+            ->firstOrFail();
+
+        $transaction->update($data);
+
+        return $transaction->refresh();
+    }
+
     public function delete(int $id, int $userId)
     {
         return Transaction::where('id', $id)

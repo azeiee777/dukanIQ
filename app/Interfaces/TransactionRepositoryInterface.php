@@ -25,6 +25,11 @@ interface TransactionRepositoryInterface
     public function create(array $data);
 
     /**
+     * Update a transaction that belongs to a specific user.
+     */
+    public function update(int $id, array $data, int $userId);
+
+    /**
      * Delete a transaction belonging to a specific user.
      */
     public function delete(int $id, int $userId);

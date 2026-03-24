@@ -17,17 +17,20 @@ class TransactionController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'amount' => 'required|numeric|min:0.01',
-            'type' => 'required|in:sale,expense',
-            'description' => 'required|string|max:255',
-            'date' => 'required|date',
-            'category' => 'nullable|string|max:50' // Matches migration
-        ]);
+        $validated = $this->validateTransaction($request);
 
         $this->service->createTransaction($validated);
 
         return redirect()->route('dashboard')->with('success', 'Entry added successfully');
+    }
+
+    public function update(Request $request, $id)
+    {
+        $validated = $this->validateTransaction($request);
+
+        $this->service->updateTransaction((int) $id, $validated);
+
+        return redirect()->route('dashboard')->with('success', 'Entry updated successfully');
     }
 
     public function destroy($id)
@@ -74,5 +77,16 @@ class TransactionController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    private function validateTransaction(Request $request): array
+    {
+        return $request->validate([
+            'amount' => 'required|numeric|min:0.01',
+            'type' => 'required|in:sale,expense',
+            'description' => 'required|string|max:255',
+            'date' => 'required|date',
+            'category' => 'nullable|string|max:50|required_if:type,expense',
+        ]);
     }
 }
