@@ -1,0 +1,169 @@
+name: Deploy to Hostinger
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hostinger-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    env:
+      HOSTINGER_HOST: ${{ vars.HOSTINGER_HOST }}
+      HOSTINGER_PORT: ${{ vars.HOSTINGER_PORT }}
+      HOSTINGER_USERNAME: ${{ vars.HOSTINGER_USERNAME }}
+      HOSTINGER_APP_PATH: ${{ vars.HOSTINGER_APP_PATH }}
+      HOSTINGER_PUBLIC_PATH: ${{ vars.HOSTINGER_PUBLIC_PATH }}
+      HOSTINGER_PHP_BIN: ${{ vars.HOSTINGER_PHP_BIN }}
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Validate deploy configuration
+        env:
+          HOSTINGER_SSH_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
+        run: |
+          set -euo pipefail
+
+          HOSTINGER_PORT="${HOSTINGER_PORT:-65002}"
+          HOSTINGER_PHP_BIN="${HOSTINGER_PHP_BIN:-php}"
+
+          required_values=(
+            HOSTINGER_HOST
+            HOSTINGER_USERNAME
+            HOSTINGER_APP_PATH
+            HOSTINGER_PUBLIC_PATH
+            HOSTINGER_SSH_KEY
+          )
+
+          for name in "${required_values[@]}"; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::${name} is not configured in GitHub Actions variables or secrets."
+              exit 1
+            fi
+          done
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, dom, fileinfo, pdo_mysql
+          coverage: none
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install PHP dependencies
+        run: composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Prepare Hostinger deploy package
+        run: bash scripts/prepare-hostinger-deploy.sh
+
+      - name: Configure SSH access
+        env:
+          HOSTINGER_SSH_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
+        run: |
+          set -euo pipefail
+
+          HOSTINGER_PORT="${HOSTINGER_PORT:-65002}"
+
+          mkdir -p ~/.ssh
+          printf '%s\n' "$HOSTINGER_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p "$HOSTINGER_PORT" -H "$HOSTINGER_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Ensure remote directories exist
+        run: |
+          set -euo pipefail
+
+          HOSTINGER_PORT="${HOSTINGER_PORT:-65002}"
+
+          ssh -p "$HOSTINGER_PORT" "$HOSTINGER_USERNAME@$HOSTINGER_HOST" \
+            "mkdir -p \"$HOSTINGER_APP_PATH\" \"$HOSTINGER_PUBLIC_PATH\""
+
+      - name: Sync Laravel application
+        run: |
+          set -euo pipefail
+
+          HOSTINGER_PORT="${HOSTINGER_PORT:-65002}"
+
+          rsync -az --delete \
+            --exclude='.env' \
+            --exclude='database/database.sqlite' \
+            --exclude='storage/app' \
+            --exclude='storage/framework' \
+            --exclude='storage/logs' \
+            -e "ssh -p $HOSTINGER_PORT" \
+            .deploy/laravel_app/ \
+            "$HOSTINGER_USERNAME@$HOSTINGER_HOST:$HOSTINGER_APP_PATH/"
+
+      - name: Sync public files
+        run: |
+          set -euo pipefail
+
+          HOSTINGER_PORT="${HOSTINGER_PORT:-65002}"
+
+          rsync -az --delete \
+            --exclude='.well-known' \
+            --exclude='cgi-bin' \
+            --exclude='error_log' \
+            --exclude='storage' \
+            -e "ssh -p $HOSTINGER_PORT" \
+            .deploy/public_html/ \
+            "$HOSTINGER_USERNAME@$HOSTINGER_HOST:$HOSTINGER_PUBLIC_PATH/"
+
+      - name: Finalize remote application
+        run: |
+          set -euo pipefail
+
+          HOSTINGER_PORT="${HOSTINGER_PORT:-65002}"
+          HOSTINGER_PHP_BIN="${HOSTINGER_PHP_BIN:-php}"
+
+          ssh -p "$HOSTINGER_PORT" "$HOSTINGER_USERNAME@$HOSTINGER_HOST" <<EOF
+          set -euo pipefail
+
+          APP_PATH="$HOSTINGER_APP_PATH"
+          PUBLIC_PATH="$HOSTINGER_PUBLIC_PATH"
+          PHP_BIN="$HOSTINGER_PHP_BIN"
+
+          mkdir -p \
+            "\$APP_PATH/bootstrap/cache" \
+            "\$APP_PATH/storage/app/private" \
+            "\$APP_PATH/storage/app/public" \
+            "\$APP_PATH/storage/framework/cache/data" \
+            "\$APP_PATH/storage/framework/sessions" \
+            "\$APP_PATH/storage/framework/views" \
+            "\$APP_PATH/storage/logs"
+
+          if [ -L "\$PUBLIC_PATH/public" ]; then
+            rm "\$PUBLIC_PATH/public"
+          fi
+
+          ln -sfn "\$APP_PATH/storage/app/public" "\$PUBLIC_PATH/storage"
+          chmod -R ug+rw "\$APP_PATH/storage" "\$APP_PATH/bootstrap/cache" || true
+
+          cd "\$APP_PATH"
+          "\$PHP_BIN" artisan migrate --force
+          "\$PHP_BIN" artisan optimize:clear
+          "\$PHP_BIN" artisan config:cache
+          "\$PHP_BIN" artisan view:cache
+          EOF
