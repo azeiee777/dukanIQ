@@ -50,6 +50,83 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
+
+        .dashboard-entry-dock {
+            position: fixed;
+            right: 1rem;
+            bottom: 1.25rem;
+            z-index: 70;
+            pointer-events: none;
+        }
+
+        .dashboard-entry-button {
+            pointer-events: auto;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 3.5rem;
+            height: 3.5rem;
+            border: 1px solid rgba(129, 140, 248, 0.3);
+            border-radius: 9999px;
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 52%, #7c3aed 100%);
+            color: #fff;
+            box-shadow: 0 22px 40px -20px rgba(79, 70, 229, 0.8);
+            transition: transform 0.22s ease, box-shadow 0.22s ease, filter 0.22s ease;
+        }
+
+        .dashboard-entry-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 26px 48px -22px rgba(79, 70, 229, 0.92);
+            filter: brightness(1.03);
+        }
+
+        .dashboard-entry-button:focus-visible {
+            outline: 0;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2), 0 26px 48px -22px rgba(79, 70, 229, 0.92);
+        }
+
+        .dashboard-entry-icon-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        .dashboard-entry-label {
+            display: none;
+            white-space: nowrap;
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+        }
+
+        @media (min-width: 640px) {
+            .dashboard-entry-dock {
+                right: 1.5rem;
+                bottom: 1.5rem;
+            }
+
+            .dashboard-entry-button {
+                width: auto;
+                height: 3.75rem;
+                padding: 0 1.5rem 0 1rem;
+                gap: 0.75rem;
+                border-radius: 1.25rem;
+            }
+
+            .dashboard-entry-icon-wrap {
+                width: 2.5rem;
+                height: 2.5rem;
+                border-radius: 0.95rem;
+                background: rgba(255, 255, 255, 0.14);
+                box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            }
+
+            .dashboard-entry-label {
+                display: inline;
+            }
+        }
     </style>
 
     <script>
@@ -470,14 +547,16 @@
             </div>
         </div>
 
-        <button @click="openCreateModal()"
-            class="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-6 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-2xl shadow-indigo-500/40 hover:scale-105 transition-all duration-300 group">
-            <svg class="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" fill="none"
-                stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-            </svg>
-            <span class="font-bold text-sm tracking-wide">New Entry</span>
-        </button>
+        <div class="dashboard-entry-dock">
+            <button @click="openCreateModal()" aria-label="New Entry" class="dashboard-entry-button" type="button">
+                <span class="dashboard-entry-icon-wrap">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 5v14m7-7H5"></path>
+                    </svg>
+                </span>
+                <span class="dashboard-entry-label">New Entry</span>
+            </button>
+        </div>
 
         <div x-show="showModal" style="display: none;" class="relative z-[60]">
             <div x-show="showModal" x-transition.opacity @click="closeModal()"
@@ -593,6 +672,6 @@
                     </div>
                 </div>
             </div>
-        </div>
+
     </div>
 </x-app-layout>

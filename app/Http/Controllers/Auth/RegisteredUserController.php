@@ -3,17 +3,22 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Otp;
 use App\Models\User;
+use App\Services\OtpService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
 {
+    public function __construct(protected OtpService $otpService)
+    {
+    }
+
     /**
      * Display the registration view.
      */
@@ -43,8 +48,18 @@ class RegisteredUserController extends Controller
 
         event(new Registered($user));
 
-        Auth::login($user);
+        try {
+            $this->otpService->sendSignupOtp($user->email);
 
-        return redirect(route('dashboard', absolute: false));
+            return redirect()->route('otp.verify', [
+                'email' => $user->email,
+                'purpose' => Otp::PURPOSE_SIGNUP,
+            ])->with('status', 'Account created successfully! Check your inbox for the verification code to continue.');
+        } catch (\Throwable $exception) {
+            return redirect()->route('otp.verify', [
+                'email' => $user->email,
+                'purpose' => Otp::PURPOSE_SIGNUP,
+            ])->with('error', 'Account created, but we could not send the OTP right now. Please use resend to continue.');
+        }
     }
 }

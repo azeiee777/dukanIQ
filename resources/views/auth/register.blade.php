@@ -6,9 +6,8 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
         </a>
-        </a>
         <h2 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Create Account</h2>
-        <p class="text-slate-500 dark:text-slate-400 text-sm mt-2">Join thousands of smart shopkeepers</p>
+        <p class="text-slate-500 dark:text-slate-400 text-sm mt-2">Join thousands of smart shopkeepers - Email verification required</p>
     </div>
 
     <form method="POST" action="{{ route('register') }}" class="space-y-5">
@@ -26,7 +25,7 @@
                             d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                 </div>
-                <input id="name" type="text" name="name" :value="old('name')" required autofocus
+                <input id="name" type="text" name="name" value="{{ old('name') }}" required autofocus
                     autocomplete="name"
                     class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 dark:focus:border-indigo-400 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-all duration-200 sm:text-sm"
                     placeholder="e.g. Abdul Aziz">
@@ -54,7 +53,7 @@
                             d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
                     </svg>
                 </div>
-                <input id="email" type="email" name="email" :value="old('email')" required
+                <input id="email" type="email" name="email" value="{{ old('email') }}" required
                     autocomplete="username"
                     class="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 dark:focus:border-indigo-400 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-all duration-200 sm:text-sm"
                     placeholder="you@example.com">

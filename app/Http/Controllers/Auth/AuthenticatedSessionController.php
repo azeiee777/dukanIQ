@@ -26,6 +26,21 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
+        $user = $request->user();
+
+        if ($user && ! $user->email_verified_at) {
+            Auth::guard('web')->logout();
+
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')
+                ->withErrors([
+                    'email' => 'Please complete email verification to finish signup before logging in with a password.',
+                ])
+                ->withInput($request->only('email'));
+        }
+
         $request->session()->regenerate();
 
         return redirect()->intended(route('dashboard', absolute: false));
