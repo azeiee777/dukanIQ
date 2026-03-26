@@ -90,18 +90,28 @@ jobs:
 
           mkdir -p ~/.ssh
 
-          if [ -n "${HOSTINGER_SSH_KEY:-}" ]; then
+          if [ -n "${HOSTINGER_PASSWORD:-}" ]; then
+            sudo apt-get update
+            sudo apt-get install -y sshpass
+          elif [ -n "${HOSTINGER_SSH_KEY:-}" ]; then
             printf '%s\n' "$HOSTINGER_SSH_KEY" > ~/.ssh/id_ed25519
             chmod 600 ~/.ssh/id_ed25519
             ssh-keyscan -p "$HOSTINGER_PORT" -H "$HOSTINGER_HOST" >> ~/.ssh/known_hosts 2>/dev/null
           else
-            sudo apt-get update
-            sudo apt-get install -y sshpass
+            echo "::error::No valid Hostinger auth method is configured."
+            exit 1
           fi
 
           cat > /tmp/hostinger-ssh <<'EOF'
           #!/usr/bin/env bash
           set -euo pipefail
+
+          if [ -n "${HOSTINGER_PASSWORD:-}" ]; then
+            exec sshpass -p "${HOSTINGER_PASSWORD:?}" ssh \
+              -p "${HOSTINGER_PORT:-65002}" \
+              -o StrictHostKeyChecking=no \
+              "$@"
+          fi
 
           if [ -n "${HOSTINGER_SSH_KEY:-}" ]; then
             exec ssh \
@@ -112,10 +122,8 @@ jobs:
               "$@"
           fi
 
-          exec sshpass -p "${HOSTINGER_PASSWORD:?}" ssh \
-            -p "${HOSTINGER_PORT:-65002}" \
-            -o StrictHostKeyChecking=no \
-            "$@"
+          echo "No Hostinger auth method available." >&2
+          exit 1
           EOF
           chmod +x /tmp/hostinger-ssh
 
