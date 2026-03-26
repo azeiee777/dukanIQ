@@ -18,20 +18,20 @@ jobs:
     name: Build and Deploy
     runs-on: ubuntu-latest
     env:
-      HOSTINGER_HOST: ${{ vars.HOSTINGER_HOST }}
-      HOSTINGER_PORT: ${{ vars.HOSTINGER_PORT }}
-      HOSTINGER_USERNAME: ${{ vars.HOSTINGER_USERNAME }}
-      HOSTINGER_APP_PATH: ${{ vars.HOSTINGER_APP_PATH }}
-      HOSTINGER_PUBLIC_PATH: ${{ vars.HOSTINGER_PUBLIC_PATH }}
-      HOSTINGER_PHP_BIN: ${{ vars.HOSTINGER_PHP_BIN }}
+      HOSTINGER_HOST: ${{ vars.HOSTINGER_HOST || secrets.HOSTINGER_HOST }}
+      HOSTINGER_PORT: ${{ vars.HOSTINGER_PORT || secrets.HOSTINGER_PORT }}
+      HOSTINGER_USERNAME: ${{ vars.HOSTINGER_USERNAME || secrets.HOSTINGER_USERNAME }}
+      HOSTINGER_APP_PATH: ${{ vars.HOSTINGER_APP_PATH || secrets.HOSTINGER_APP_PATH }}
+      HOSTINGER_PUBLIC_PATH: ${{ vars.HOSTINGER_PUBLIC_PATH || secrets.HOSTINGER_PUBLIC_PATH }}
+      HOSTINGER_PHP_BIN: ${{ vars.HOSTINGER_PHP_BIN || secrets.HOSTINGER_PHP_BIN }}
+      HOSTINGER_SSH_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
+      HOSTINGER_PASSWORD: ${{ secrets.HOSTINGER_PASSWORD }}
 
     steps:
       - name: Check out code
         uses: actions/checkout@v4
 
       - name: Validate deploy configuration
-        env:
-          HOSTINGER_SSH_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
         run: |
           set -euo pipefail
 
@@ -43,7 +43,6 @@ jobs:
             HOSTINGER_USERNAME
             HOSTINGER_APP_PATH
             HOSTINGER_PUBLIC_PATH
-            HOSTINGER_SSH_KEY
           )
 
           for name in "${required_values[@]}"; do
@@ -52,6 +51,11 @@ jobs:
               exit 1
             fi
           done
+
+          if [ -z "${HOSTINGER_SSH_KEY:-}" ] && [ -z "${HOSTINGER_PASSWORD:-}" ]; then
+            echo "::error::Set either HOSTINGER_SSH_KEY or HOSTINGER_PASSWORD in GitHub Actions secrets."
+            exit 1
+          fi
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
@@ -78,33 +82,69 @@ jobs:
       - name: Prepare Hostinger deploy package
         run: bash scripts/prepare-hostinger-deploy.sh
 
-      - name: Configure SSH access
-        env:
-          HOSTINGER_SSH_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
+      - name: Configure remote access
         run: |
           set -euo pipefail
 
           HOSTINGER_PORT="${HOSTINGER_PORT:-65002}"
 
           mkdir -p ~/.ssh
-          printf '%s\n' "$HOSTINGER_SSH_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -p "$HOSTINGER_PORT" -H "$HOSTINGER_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+          if [ -n "${HOSTINGER_SSH_KEY:-}" ]; then
+            printf '%s\n' "$HOSTINGER_SSH_KEY" > ~/.ssh/id_ed25519
+            chmod 600 ~/.ssh/id_ed25519
+            ssh-keyscan -p "$HOSTINGER_PORT" -H "$HOSTINGER_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          else
+            sudo apt-get update
+            sudo apt-get install -y sshpass
+          fi
+
+          cat > /tmp/hostinger-ssh <<'EOF'
+          #!/usr/bin/env bash
+          set -euo pipefail
+
+          if [ -n "${HOSTINGER_SSH_KEY:-}" ]; then
+            exec ssh \
+              -i "$HOME/.ssh/id_ed25519" \
+              -p "${HOSTINGER_PORT:-65002}" \
+              -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+              -o StrictHostKeyChecking=yes \
+              "$@"
+          fi
+
+          exec sshpass -p "${HOSTINGER_PASSWORD:?}" ssh \
+            -p "${HOSTINGER_PORT:-65002}" \
+            -o StrictHostKeyChecking=no \
+            "$@"
+          EOF
+          chmod +x /tmp/hostinger-ssh
 
       - name: Ensure remote directories exist
         run: |
           set -euo pipefail
 
-          HOSTINGER_PORT="${HOSTINGER_PORT:-65002}"
-
-          ssh -p "$HOSTINGER_PORT" "$HOSTINGER_USERNAME@$HOSTINGER_HOST" \
+          /tmp/hostinger-ssh "$HOSTINGER_USERNAME@$HOSTINGER_HOST" \
             "mkdir -p \"$HOSTINGER_APP_PATH\" \"$HOSTINGER_PUBLIC_PATH\""
+
+      - name: Enable maintenance mode
+        run: |
+          set -euo pipefail
+
+          /tmp/hostinger-ssh "$HOSTINGER_USERNAME@$HOSTINGER_HOST" <<EOF
+          set -euo pipefail
+
+          APP_PATH="$HOSTINGER_APP_PATH"
+          PHP_BIN="${HOSTINGER_PHP_BIN:-php}"
+
+          if [ -f "\$APP_PATH/artisan" ]; then
+            cd "\$APP_PATH"
+            "\$PHP_BIN" artisan down || true
+          fi
+          EOF
 
       - name: Sync Laravel application
         run: |
           set -euo pipefail
-
-          HOSTINGER_PORT="${HOSTINGER_PORT:-65002}"
 
           rsync -az --delete \
             --exclude='.env' \
@@ -112,7 +152,7 @@ jobs:
             --exclude='storage/app' \
             --exclude='storage/framework' \
             --exclude='storage/logs' \
-            -e "ssh -p $HOSTINGER_PORT" \
+            -e "/tmp/hostinger-ssh" \
             .deploy/laravel_app/ \
             "$HOSTINGER_USERNAME@$HOSTINGER_HOST:$HOSTINGER_APP_PATH/"
 
@@ -120,14 +160,12 @@ jobs:
         run: |
           set -euo pipefail
 
-          HOSTINGER_PORT="${HOSTINGER_PORT:-65002}"
-
           rsync -az --delete \
             --exclude='.well-known' \
             --exclude='cgi-bin' \
             --exclude='error_log' \
             --exclude='storage' \
-            -e "ssh -p $HOSTINGER_PORT" \
+            -e "/tmp/hostinger-ssh" \
             .deploy/public_html/ \
             "$HOSTINGER_USERNAME@$HOSTINGER_HOST:$HOSTINGER_PUBLIC_PATH/"
 
@@ -135,15 +173,21 @@ jobs:
         run: |
           set -euo pipefail
 
-          HOSTINGER_PORT="${HOSTINGER_PORT:-65002}"
           HOSTINGER_PHP_BIN="${HOSTINGER_PHP_BIN:-php}"
 
-          ssh -p "$HOSTINGER_PORT" "$HOSTINGER_USERNAME@$HOSTINGER_HOST" <<EOF
+          /tmp/hostinger-ssh "$HOSTINGER_USERNAME@$HOSTINGER_HOST" <<EOF
           set -euo pipefail
 
           APP_PATH="$HOSTINGER_APP_PATH"
           PUBLIC_PATH="$HOSTINGER_PUBLIC_PATH"
           PHP_BIN="$HOSTINGER_PHP_BIN"
+
+          if [ -f "\$APP_PATH/artisan" ]; then
+            cleanup() {
+              "\$PHP_BIN" artisan up || true
+            }
+            trap cleanup EXIT
+          fi
 
           mkdir -p \
             "\$APP_PATH/bootstrap/cache" \
@@ -162,8 +206,9 @@ jobs:
           chmod -R ug+rw "\$APP_PATH/storage" "\$APP_PATH/bootstrap/cache" || true
 
           cd "\$APP_PATH"
-          "\$PHP_BIN" artisan migrate --force
           "\$PHP_BIN" artisan optimize:clear
+          "\$PHP_BIN" artisan migrate --force
           "\$PHP_BIN" artisan config:cache
           "\$PHP_BIN" artisan view:cache
+          "\$PHP_BIN" artisan up || true
           EOF

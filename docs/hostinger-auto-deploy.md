@@ -21,12 +21,16 @@ This project now includes a GitHub Actions workflow that deploys every push to `
 
 ## GitHub setup
 
-Add these in your GitHub repository:
+Add these in your GitHub repository. The workflow now supports either SSH key auth or password auth.
 
 ### Actions secrets
 
 - `HOSTINGER_SSH_KEY`
-  Use the private SSH key that can log in to your Hostinger account.
+  Optional. Use the private SSH key that can log in to your Hostinger account.
+- `HOSTINGER_PASSWORD`
+  Optional. Use your Hostinger SSH password if you do not want to use SSH keys yet.
+
+You must set at least one of `HOSTINGER_SSH_KEY` or `HOSTINGER_PASSWORD`.
 
 ### Actions variables
 
@@ -43,12 +47,15 @@ Add these in your GitHub repository:
 - `HOSTINGER_PHP_BIN`
   Optional. Default is `php`.
 
+If you prefer, these connection values can also be stored as repository secrets instead of variables. The workflow accepts both.
+
 ## Hostinger setup
 
 1. Enable SSH access in Hostinger if it is not already enabled.
 2. Add the public half of your deploy key to Hostinger `authorized_keys`.
 3. Make sure your production `.env` stays inside `laravel_app/.env`.
 4. Keep `storage` writable on the server.
+5. If you use password auth, confirm that SSH login with password is enabled for your hosting account.
 
 ## How deploys work
 
@@ -58,7 +65,9 @@ Add these in your GitHub repository:
 4. The workflow uploads:
    - app files into `laravel_app`
    - public files and `build` assets into `public_html`
-5. The workflow runs migrations and refreshes Laravel caches on the server.
+5. The workflow puts the app into maintenance mode before syncing files.
+6. The workflow runs migrations and refreshes Laravel caches on the server.
+7. The workflow brings the app back up automatically.
 
 ## Important note about your current Hostinger setup
 
