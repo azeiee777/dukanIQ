@@ -17,46 +17,31 @@ jobs:
   deploy:
     name: Build and Deploy
     runs-on: ubuntu-latest
-    env:
-      HOSTINGER_HOST: ${{ vars.HOSTINGER_HOST || secrets.HOSTINGER_HOST }}
-      HOSTINGER_PORT: ${{ vars.HOSTINGER_PORT || secrets.HOSTINGER_PORT }}
-      HOSTINGER_USERNAME: ${{ vars.HOSTINGER_USERNAME || secrets.HOSTINGER_USERNAME }}
-      HOSTINGER_APP_PATH: ${{ vars.HOSTINGER_APP_PATH || secrets.HOSTINGER_APP_PATH }}
-      HOSTINGER_PUBLIC_PATH: ${{ vars.HOSTINGER_PUBLIC_PATH || secrets.HOSTINGER_PUBLIC_PATH }}
-      HOSTINGER_PHP_BIN: ${{ vars.HOSTINGER_PHP_BIN || secrets.HOSTINGER_PHP_BIN }}
-      HOSTINGER_SSH_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
-      HOSTINGER_PASSWORD: ${{ secrets.HOSTINGER_PASSWORD }}
 
     steps:
       - name: Check out code
         uses: actions/checkout@v4
 
+      # ─── Validate secrets/vars ────────────────────────────────────────────
       - name: Validate deploy configuration
         run: |
           set -euo pipefail
 
-          HOSTINGER_PORT="${HOSTINGER_PORT:-65002}"
-          HOSTINGER_PHP_BIN="${HOSTINGER_PHP_BIN:-php}"
+          missing=()
+          [ -z "${{ vars.HOSTINGER_HOST }}" ]         && missing+=("HOSTINGER_HOST")
+          [ -z "${{ vars.HOSTINGER_USERNAME }}" ]     && missing+=("HOSTINGER_USERNAME")
+          [ -z "${{ vars.HOSTINGER_APP_PATH }}" ]     && missing+=("HOSTINGER_APP_PATH")
+          [ -z "${{ vars.HOSTINGER_PUBLIC_PATH }}" ]  && missing+=("HOSTINGER_PUBLIC_PATH")
+          [ -z "${{ secrets.HOSTINGER_SSH_KEY }}" ]   && missing+=("HOSTINGER_SSH_KEY")
 
-          required_values=(
-            HOSTINGER_HOST
-            HOSTINGER_USERNAME
-            HOSTINGER_APP_PATH
-            HOSTINGER_PUBLIC_PATH
-          )
-
-          for name in "${required_values[@]}"; do
-            if [ -z "${!name:-}" ]; then
-              echo "::error::${name} is not configured in GitHub Actions variables or secrets."
-              exit 1
-            fi
-          done
-
-          if [ -z "${HOSTINGER_SSH_KEY:-}" ] && [ -z "${HOSTINGER_PASSWORD:-}" ]; then
-            echo "::error::Set either HOSTINGER_SSH_KEY or HOSTINGER_PASSWORD in GitHub Actions secrets."
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::Missing required secrets/variables: ${missing[*]}"
             exit 1
           fi
 
+          echo "✅ All required secrets/variables are set."
+
+      # ─── PHP Setup ───────────────────────────────────────────────────────
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -64,12 +49,14 @@ jobs:
           extensions: mbstring, dom, fileinfo, pdo_mysql
           coverage: none
 
+      # ─── Node Setup ──────────────────────────────────────────────────────
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
 
+      # ─── Install & Build ─────────────────────────────────────────────────
       - name: Install PHP dependencies
         run: composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
 
@@ -79,92 +66,98 @@ jobs:
       - name: Build frontend assets
         run: npm run build
 
-      - name: Prepare Hostinger deploy package
+      # ─── Prepare deploy package ──────────────────────────────────────────
+      - name: Prepare deploy package
         run: bash scripts/prepare-hostinger-deploy.sh
 
-      - name: Configure remote access
+      # ─── Setup SSH ───────────────────────────────────────────────────────
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
+          SSH_HOST: ${{ vars.HOSTINGER_HOST }}
+          SSH_PORT: ${{ vars.HOSTINGER_PORT || '65002' }}
         run: |
           set -euo pipefail
-
-          HOSTINGER_PORT="${HOSTINGER_PORT:-65002}"
 
           mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
 
-          if [ -n "${HOSTINGER_PASSWORD:-}" ]; then
-            sudo apt-get update
-            sudo apt-get install -y sshpass
-          elif [ -n "${HOSTINGER_SSH_KEY:-}" ]; then
-            printf '%s\n' "$HOSTINGER_SSH_KEY" > ~/.ssh/id_ed25519
-            chmod 600 ~/.ssh/id_ed25519
-            ssh-keyscan -p "$HOSTINGER_PORT" -H "$HOSTINGER_HOST" >> ~/.ssh/known_hosts 2>/dev/null
-          else
-            echo "::error::No valid Hostinger auth method is configured."
-            exit 1
-          fi
+          # Write private key
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
 
-          cat > /tmp/hostinger-ssh <<'EOF'
-          #!/usr/bin/env bash
-          set -euo pipefail
+          # Add host to known_hosts (avoid interactive prompt)
+          ssh-keyscan -p "${SSH_PORT:-65002}" -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
-          if [ -n "${HOSTINGER_PASSWORD:-}" ]; then
-            exec sshpass -p "${HOSTINGER_PASSWORD:?}" ssh \
-              -p "${HOSTINGER_PORT:-65002}" \
-              -o StrictHostKeyChecking=no \
-              "$@"
-          fi
+          echo "✅ SSH configured."
 
-          if [ -n "${HOSTINGER_SSH_KEY:-}" ]; then
-            exec ssh \
-              -i "$HOME/.ssh/id_ed25519" \
-              -p "${HOSTINGER_PORT:-65002}" \
-              -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
-              -o StrictHostKeyChecking=yes \
-              "$@"
-          fi
-
-          echo "No Hostinger auth method available." >&2
-          exit 1
-          EOF
-          chmod +x /tmp/hostinger-ssh
-
+      # ─── Ensure remote directories exist ─────────────────────────────────
       - name: Ensure remote directories exist
+        env:
+          SSH_HOST: ${{ vars.HOSTINGER_HOST }}
+          SSH_PORT: ${{ vars.HOSTINGER_PORT || '65002' }}
+          SSH_USER: ${{ vars.HOSTINGER_USERNAME }}
+          APP_PATH: ${{ vars.HOSTINGER_APP_PATH }}
+          PUBLIC_PATH: ${{ vars.HOSTINGER_PUBLIC_PATH }}
         run: |
           set -euo pipefail
 
-          /tmp/hostinger-ssh "$HOSTINGER_USERNAME@$HOSTINGER_HOST" \
-            "mkdir -p \"$HOSTINGER_APP_PATH\" \"$HOSTINGER_PUBLIC_PATH\""
+          ssh -i ~/.ssh/id_ed25519 \
+              -p "${SSH_PORT:-65002}" \
+              -o StrictHostKeyChecking=yes \
+              -o ConnectTimeout=30 \
+              "$SSH_USER@$SSH_HOST" \
+              "mkdir -p \"$APP_PATH\" \"$PUBLIC_PATH\""
 
+          echo "✅ Remote directories confirmed."
+
+      # ─── Enable maintenance mode ─────────────────────────────────────────
       - name: Enable maintenance mode
+        env:
+          SSH_HOST: ${{ vars.HOSTINGER_HOST }}
+          SSH_PORT: ${{ vars.HOSTINGER_PORT || '65002' }}
+          SSH_USER: ${{ vars.HOSTINGER_USERNAME }}
+          APP_PATH: ${{ vars.HOSTINGER_APP_PATH }}
+          PHP_BIN: ${{ vars.HOSTINGER_PHP_BIN || 'php' }}
         run: |
           set -euo pipefail
 
-          /tmp/hostinger-ssh "$HOSTINGER_USERNAME@$HOSTINGER_HOST" <<EOF
-          set -euo pipefail
+          ssh -i ~/.ssh/id_ed25519 \
+              -p "${SSH_PORT:-65002}" \
+              -o StrictHostKeyChecking=yes \
+              "$SSH_USER@$SSH_HOST" \
+              "cd \"$APP_PATH\" && [ -f artisan ] && $PHP_BIN artisan down --render='errors::503' || true"
 
-          APP_PATH="$HOSTINGER_APP_PATH"
-          PHP_BIN="${HOSTINGER_PHP_BIN:-php}"
+          echo "✅ Maintenance mode enabled (if artisan exists)."
 
-          if [ -f "\$APP_PATH/artisan" ]; then
-            cd "\$APP_PATH"
-            "\$PHP_BIN" artisan down || true
-          fi
-          EOF
-
+      # ─── Sync Laravel app ────────────────────────────────────────────────
       - name: Sync Laravel application
+        env:
+          SSH_HOST: ${{ vars.HOSTINGER_HOST }}
+          SSH_PORT: ${{ vars.HOSTINGER_PORT || '65002' }}
+          SSH_USER: ${{ vars.HOSTINGER_USERNAME }}
+          APP_PATH: ${{ vars.HOSTINGER_APP_PATH }}
         run: |
           set -euo pipefail
 
           rsync -az --delete \
             --exclude='.env' \
-            --exclude='database/database.sqlite' \
             --exclude='storage/app' \
             --exclude='storage/framework' \
             --exclude='storage/logs' \
-            -e "/tmp/hostinger-ssh" \
+            -e "ssh -i ~/.ssh/id_ed25519 -p ${SSH_PORT:-65002} -o StrictHostKeyChecking=yes" \
             .deploy/laravel_app/ \
-            "$HOSTINGER_USERNAME@$HOSTINGER_HOST:$HOSTINGER_APP_PATH/"
+            "$SSH_USER@$SSH_HOST:$APP_PATH/"
 
+          echo "✅ Laravel app synced."
+
+      # ─── Sync public files ───────────────────────────────────────────────
       - name: Sync public files
+        env:
+          SSH_HOST: ${{ vars.HOSTINGER_HOST }}
+          SSH_PORT: ${{ vars.HOSTINGER_PORT || '65002' }}
+          SSH_USER: ${{ vars.HOSTINGER_USERNAME }}
+          PUBLIC_PATH: ${{ vars.HOSTINGER_PUBLIC_PATH }}
         run: |
           set -euo pipefail
 
@@ -173,50 +166,61 @@ jobs:
             --exclude='cgi-bin' \
             --exclude='error_log' \
             --exclude='storage' \
-            -e "/tmp/hostinger-ssh" \
+            -e "ssh -i ~/.ssh/id_ed25519 -p ${SSH_PORT:-65002} -o StrictHostKeyChecking=yes" \
             .deploy/public_html/ \
-            "$HOSTINGER_USERNAME@$HOSTINGER_HOST:$HOSTINGER_PUBLIC_PATH/"
+            "$SSH_USER@$SSH_HOST:$PUBLIC_PATH/"
 
+          echo "✅ Public files synced."
+
+      # ─── Finalize on server ──────────────────────────────────────────────
       - name: Finalize remote application
+        env:
+          SSH_HOST: ${{ vars.HOSTINGER_HOST }}
+          SSH_PORT: ${{ vars.HOSTINGER_PORT || '65002' }}
+          SSH_USER: ${{ vars.HOSTINGER_USERNAME }}
+          APP_PATH: ${{ vars.HOSTINGER_APP_PATH }}
+          PUBLIC_PATH: ${{ vars.HOSTINGER_PUBLIC_PATH }}
+          PHP_BIN: ${{ vars.HOSTINGER_PHP_BIN || 'php' }}
         run: |
           set -euo pipefail
 
-          HOSTINGER_PHP_BIN="${HOSTINGER_PHP_BIN:-php}"
+          ssh -i ~/.ssh/id_ed25519 \
+              -p "${SSH_PORT:-65002}" \
+              -o StrictHostKeyChecking=yes \
+              "$SSH_USER@$SSH_HOST" << 'ENDSSH'
+            set -euo pipefail
 
-          /tmp/hostinger-ssh "$HOSTINGER_USERNAME@$HOSTINGER_HOST" <<EOF
-          set -euo pipefail
+            APP_PATH="$APP_PATH"
+            PUBLIC_PATH="$PUBLIC_PATH"
+            PHP_BIN="$PHP_BIN"
 
-          APP_PATH="$HOSTINGER_APP_PATH"
-          PUBLIC_PATH="$HOSTINGER_PUBLIC_PATH"
-          PHP_BIN="$HOSTINGER_PHP_BIN"
+            # Ensure storage dirs exist
+            mkdir -p \
+              "$APP_PATH/bootstrap/cache" \
+              "$APP_PATH/storage/app/private" \
+              "$APP_PATH/storage/app/public" \
+              "$APP_PATH/storage/framework/cache/data" \
+              "$APP_PATH/storage/framework/sessions" \
+              "$APP_PATH/storage/framework/views" \
+              "$APP_PATH/storage/logs"
 
-          if [ -f "\$APP_PATH/artisan" ]; then
-            cleanup() {
-              "\$PHP_BIN" artisan up || true
-            }
-            trap cleanup EXIT
-          fi
+            # Symlink storage into public_html
+            ln -sfn "$APP_PATH/storage/app/public" "$PUBLIC_PATH/storage"
 
-          mkdir -p \
-            "\$APP_PATH/bootstrap/cache" \
-            "\$APP_PATH/storage/app/private" \
-            "\$APP_PATH/storage/app/public" \
-            "\$APP_PATH/storage/framework/cache/data" \
-            "\$APP_PATH/storage/framework/sessions" \
-            "\$APP_PATH/storage/framework/views" \
-            "\$APP_PATH/storage/logs"
+            # Set permissions
+            chmod -R ug+rw "$APP_PATH/storage" "$APP_PATH/bootstrap/cache" || true
 
-          if [ -L "\$PUBLIC_PATH/public" ]; then
-            rm "\$PUBLIC_PATH/public"
-          fi
+            cd "$APP_PATH"
 
-          ln -sfn "\$APP_PATH/storage/app/public" "\$PUBLIC_PATH/storage"
-          chmod -R ug+rw "\$APP_PATH/storage" "\$APP_PATH/bootstrap/cache" || true
+            # Run Laravel post-deploy commands
+            "$PHP_BIN" artisan optimize:clear
+            "$PHP_BIN" artisan migrate --force
+            "$PHP_BIN" artisan config:cache
+            "$PHP_BIN" artisan route:cache
+            "$PHP_BIN" artisan view:cache
 
-          cd "\$APP_PATH"
-          "\$PHP_BIN" artisan optimize:clear
-          "\$PHP_BIN" artisan migrate --force
-          "\$PHP_BIN" artisan config:cache
-          "\$PHP_BIN" artisan view:cache
-          "\$PHP_BIN" artisan up || true
-          EOF
+            # Bring app back up
+            "$PHP_BIN" artisan up || true
+
+            echo "✅ Deploy complete!"
+          ENDSSH

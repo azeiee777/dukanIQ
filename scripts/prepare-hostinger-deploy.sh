@@ -1,35 +1,38 @@
 #!/usr/bin/env bash
-
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DEPLOY_ROOT="$ROOT_DIR/.deploy"
-APP_STAGE="$DEPLOY_ROOT/laravel_app"
-PUBLIC_STAGE="$DEPLOY_ROOT/public_html"
+echo "📦 Preparing Hostinger deploy package..."
 
-rm -rf "$DEPLOY_ROOT"
-mkdir -p "$APP_STAGE" "$PUBLIC_STAGE"
+# Clean previous deploy artifacts
+rm -rf .deploy
+mkdir -p .deploy/laravel_app
+mkdir -p .deploy/public_html
 
-rsync -a "$ROOT_DIR"/ "$APP_STAGE"/ \
-  --exclude ".deploy" \
-  --exclude ".git" \
-  --exclude ".github" \
-  --exclude ".idea" \
-  --exclude ".vscode" \
-  --exclude "node_modules" \
-  --exclude "tests" \
-  --exclude ".env" \
-  --exclude ".env.*" \
-  --exclude ".phpunit.result.cache" \
-  --exclude "database/database.sqlite" \
-  --exclude "storage/app/*" \
-  --exclude "storage/framework/*" \
-  --exclude "storage/logs/*"
+echo "📁 Copying Laravel app files..."
+rsync -a \
+  --exclude='.git' \
+  --exclude='.github' \
+  --exclude='.deploy' \
+  --exclude='node_modules' \
+  --exclude='tests' \
+  --exclude='.env' \
+  --exclude='storage/app' \
+  --exclude='storage/framework' \
+  --exclude='storage/logs' \
+  --exclude='public/build' \
+  --exclude='public/storage' \
+  --exclude='scripts' \
+  . .deploy/laravel_app/
 
-rsync -a "$ROOT_DIR/public"/ "$PUBLIC_STAGE"/
+echo "📁 Copying public files..."
+rsync -a \
+  public/ .deploy/public_html/
 
-sed -i "s#__DIR__.'/../storage#__DIR__.'/../laravel_app/storage#g" "$PUBLIC_STAGE/index.php"
-sed -i "s#__DIR__.'/../vendor/autoload.php'#__DIR__.'/../laravel_app/vendor/autoload.php'#g" "$PUBLIC_STAGE/index.php"
-sed -i "s#__DIR__.'/../bootstrap/app.php'#__DIR__.'/../laravel_app/bootstrap/app.php'#g" "$PUBLIC_STAGE/index.php"
+# Copy built frontend assets into public_html
+if [ -d "public/build" ]; then
+  echo "🎨 Copying built frontend assets..."
+  rsync -a public/build/ .deploy/public_html/build/
+fi
 
-printf 'Prepared Hostinger deploy package in %s\n' "$DEPLOY_ROOT"
+echo "✅ Deploy package ready!"
+ls -la .deploy/
