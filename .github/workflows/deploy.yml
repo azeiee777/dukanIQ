@@ -55,7 +55,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'
+          php-version: '8.2'
           extensions: mbstring, dom, fileinfo, pdo_mysql
           coverage: none
 
@@ -66,7 +66,7 @@ jobs:
           cache: npm
 
       - name: Install PHP dependencies
-        run: composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+        run: composer update --with-all-dependencies --no-dev --prefer-dist --optimize-autoloader --no-interaction
 
       - name: Install Node dependencies
         run: npm ci

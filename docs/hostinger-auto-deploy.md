@@ -6,6 +6,7 @@ This project now includes a simple GitHub Actions workflow that deploys every pu
 
 - Builds the Laravel app on GitHub.
 - Runs `npm run build` so the newest Vite assets are included.
+- Resolves Composer packages against PHP `8.2.30` to match your Hostinger server.
 - Packages the Laravel app into `laravel_app` and the public files into `public_html`.
 - Uploads the packaged files to Hostinger over SSH password auth.
 - Puts the app into maintenance mode before deploying.
