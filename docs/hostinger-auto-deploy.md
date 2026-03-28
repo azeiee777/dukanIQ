@@ -19,9 +19,9 @@ This project now includes a simple GitHub Actions workflow that deploys every pu
 
 ## GitHub setup
 
-Add these as repository secrets in GitHub.
+Add these in GitHub. The workflow accepts connection values from either repository `Variables` or `Secrets`, but keep the password in `Secrets`.
 
-### Actions secrets
+### Actions variables or secrets
 
 - `HOSTINGER_HOST`
   Your Hostinger SSH host or IP.
@@ -29,14 +29,17 @@ Add these as repository secrets in GitHub.
   Usually `65002` on Hostinger shared hosting.
 - `HOSTINGER_USERNAME`
   For your current setup this looks like `u481666576`.
-- `HOSTINGER_PASSWORD`
-  Your working Hostinger SSH password.
 - `HOSTINGER_APP_PATH`
   For your current setup this should be `/home/u481666576/laravel_app`.
 - `HOSTINGER_PUBLIC_PATH`
   For your current setup this should be `/home/u481666576/public_html`.
 - `HOSTINGER_PHP_BIN`
   Optional. Default is `php`.
+
+### Actions secrets
+
+- `HOSTINGER_PASSWORD`
+  Your working Hostinger SSH password.
 
 ## Hostinger setup
 

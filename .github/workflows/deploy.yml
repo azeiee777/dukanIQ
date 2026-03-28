@@ -18,13 +18,13 @@ jobs:
     name: Build and Deploy
     runs-on: ubuntu-latest
     env:
-      HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST }}
-      HOSTINGER_PORT: ${{ secrets.HOSTINGER_PORT }}
-      HOSTINGER_USERNAME: ${{ secrets.HOSTINGER_USERNAME }}
+      HOSTINGER_HOST: ${{ vars.HOSTINGER_HOST || secrets.HOSTINGER_HOST }}
+      HOSTINGER_PORT: ${{ vars.HOSTINGER_PORT || secrets.HOSTINGER_PORT }}
+      HOSTINGER_USERNAME: ${{ vars.HOSTINGER_USERNAME || secrets.HOSTINGER_USERNAME }}
       HOSTINGER_PASSWORD: ${{ secrets.HOSTINGER_PASSWORD }}
-      HOSTINGER_APP_PATH: ${{ secrets.HOSTINGER_APP_PATH }}
-      HOSTINGER_PUBLIC_PATH: ${{ secrets.HOSTINGER_PUBLIC_PATH }}
-      HOSTINGER_PHP_BIN: ${{ secrets.HOSTINGER_PHP_BIN }}
+      HOSTINGER_APP_PATH: ${{ vars.HOSTINGER_APP_PATH || secrets.HOSTINGER_APP_PATH }}
+      HOSTINGER_PUBLIC_PATH: ${{ vars.HOSTINGER_PUBLIC_PATH || secrets.HOSTINGER_PUBLIC_PATH }}
+      HOSTINGER_PHP_BIN: ${{ vars.HOSTINGER_PHP_BIN || secrets.HOSTINGER_PHP_BIN }}
 
     steps:
       - name: Check out code
@@ -47,7 +47,7 @@ jobs:
 
           for name in "${required_values[@]}"; do
             if [ -z "${!name:-}" ]; then
-              echo "::error::${name} is missing in GitHub Actions secrets."
+              echo "::error::${name} is missing in GitHub Actions variables or secrets."
               exit 1
             fi
           done
