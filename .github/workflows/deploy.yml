@@ -1,0 +1,96 @@
+name: Deploy to Hostinger
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout ────────────────────────────────────────────────────────
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ── 2. PHP ─────────────────────────────────────────────────────────────
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, dom, fileinfo, pdo_mysql
+          coverage: none
+
+      # ── 3. Node ────────────────────────────────────────────────────────────
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      # ── 4. Install & Build ─────────────────────────────────────────────────
+      - name: Install PHP dependencies
+        run: composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build frontend assets
+        run: npm run build
+
+      # ── 5. Setup SSH ───────────────────────────────────────────────────────
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.HOSTINGER_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p 65002 -H ${{ vars.HOSTINGER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+
+      # ── 6. Deploy Laravel app files ────────────────────────────────────────
+      - name: Deploy Laravel app
+        run: |
+          rsync -az --delete \
+            --exclude='.env' \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='storage/logs/*' \
+            --exclude='storage/framework/cache/*' \
+            --exclude='storage/framework/sessions/*' \
+            --exclude='storage/framework/views/*' \
+            --exclude='tests' \
+            --exclude='public/build' \
+            -e "ssh -i ~/.ssh/id_ed25519 -p 65002 -o StrictHostKeyChecking=no" \
+            ./ \
+            ${{ vars.HOSTINGER_USERNAME }}@${{ vars.HOSTINGER_HOST }}:/home/${{ vars.HOSTINGER_USERNAME }}/laravel_app/
+
+      # ── 7. Deploy public assets (Vite build) ───────────────────────────────
+      - name: Deploy public assets
+        run: |
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/id_ed25519 -p 65002 -o StrictHostKeyChecking=no" \
+            ./public/build/ \
+            ${{ vars.HOSTINGER_USERNAME }}@${{ vars.HOSTINGER_HOST }}:/home/${{ vars.HOSTINGER_USERNAME }}/public_html/build/
+
+      # ── 8. Run post-deploy commands on server ──────────────────────────────
+      - name: Post-deploy
+        run: |
+          ssh -i ~/.ssh/id_ed25519 \
+              -p 65002 \
+              -o StrictHostKeyChecking=no \
+              ${{ vars.HOSTINGER_USERNAME }}@${{ vars.HOSTINGER_HOST }} << 'ENDSSH'
+            set -e
+            cd ~/laravel_app
+
+            php artisan down --render="errors::503" || true
+            php artisan optimize:clear
+            php artisan migrate --force
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            php artisan up
+
+            echo "✅ Deploy complete!"
+          ENDSSH
