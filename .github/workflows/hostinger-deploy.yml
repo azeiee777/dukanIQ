@@ -107,7 +107,7 @@ jobs:
               -o StrictHostKeyChecking=yes \
               -o ConnectTimeout=30 \
               "$SSH_USER@$SSH_HOST" \
-              "mkdir -p \"$APP_PATH\" \"$PUBLIC_PATH\""
+              "mkdir -p \"$APP_PATH\" || true; mkdir -p \"$PUBLIC_PATH\" || true"
 
           echo "✅ Remote directories confirmed."
 
