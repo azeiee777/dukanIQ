@@ -6,17 +6,52 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: hostinger-production
+  cancel-in-progress: true
+
 jobs:
   deploy:
-    name: Deploy
+    name: Build and Deploy
     runs-on: ubuntu-latest
+    env:
+      HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST }}
+      HOSTINGER_PORT: ${{ secrets.HOSTINGER_PORT }}
+      HOSTINGER_USERNAME: ${{ secrets.HOSTINGER_USERNAME }}
+      HOSTINGER_PASSWORD: ${{ secrets.HOSTINGER_PASSWORD }}
+      HOSTINGER_APP_PATH: ${{ secrets.HOSTINGER_APP_PATH }}
+      HOSTINGER_PUBLIC_PATH: ${{ secrets.HOSTINGER_PUBLIC_PATH }}
+      HOSTINGER_PHP_BIN: ${{ secrets.HOSTINGER_PHP_BIN }}
 
     steps:
-      # ── 1. Checkout ────────────────────────────────────────────────────────
-      - name: Checkout code
+      - name: Check out code
         uses: actions/checkout@v4
 
-      # ── 2. PHP ─────────────────────────────────────────────────────────────
+      - name: Validate deploy secrets
+        run: |
+          set -euo pipefail
+
+          HOSTINGER_PORT="${HOSTINGER_PORT:-65002}"
+          HOSTINGER_PHP_BIN="${HOSTINGER_PHP_BIN:-php}"
+
+          required_values=(
+            HOSTINGER_HOST
+            HOSTINGER_USERNAME
+            HOSTINGER_PASSWORD
+            HOSTINGER_APP_PATH
+            HOSTINGER_PUBLIC_PATH
+          )
+
+          for name in "${required_values[@]}"; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::${name} is missing in GitHub Actions secrets."
+              exit 1
+            fi
+          done
+
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -24,14 +59,12 @@ jobs:
           extensions: mbstring, dom, fileinfo, pdo_mysql
           coverage: none
 
-      # ── 3. Node ────────────────────────────────────────────────────────────
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
 
-      # ── 4. Install & Build ─────────────────────────────────────────────────
       - name: Install PHP dependencies
         run: composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
 
@@ -41,56 +74,96 @@ jobs:
       - name: Build frontend assets
         run: npm run build
 
-      # ── 5. Setup SSH ───────────────────────────────────────────────────────
-      - name: Setup SSH
+      - name: Prepare deploy package
+        run: bash scripts/prepare-hostinger-deploy.sh
+
+      - name: Install SSH password helper
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.HOSTINGER_SSH_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -p 65002 -H ${{ vars.HOSTINGER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+          sudo apt-get update
+          sudo apt-get install -y sshpass
 
-      # ── 6. Deploy Laravel app files ────────────────────────────────────────
-      - name: Deploy Laravel app
+      - name: Upload release package
         run: |
-          rsync -az --delete \
-            --exclude='.env' \
-            --exclude='.git' \
-            --exclude='node_modules' \
-            --exclude='storage/logs/*' \
-            --exclude='storage/framework/cache/*' \
-            --exclude='storage/framework/sessions/*' \
-            --exclude='storage/framework/views/*' \
-            --exclude='tests' \
-            --exclude='public/build' \
-            -e "ssh -i ~/.ssh/id_ed25519 -p 65002 -o StrictHostKeyChecking=no" \
-            ./ \
-            ${{ vars.HOSTINGER_USERNAME }}@${{ vars.HOSTINGER_HOST }}:/home/${{ vars.HOSTINGER_USERNAME }}/laravel_app/
+          set -euo pipefail
 
-      # ── 7. Deploy public assets (Vite build) ───────────────────────────────
-      - name: Deploy public assets
+          HOSTINGER_PORT="${HOSTINGER_PORT:-65002}"
+
+          sshpass -p "$HOSTINGER_PASSWORD" ssh \
+            -p "$HOSTINGER_PORT" \
+            -o StrictHostKeyChecking=no \
+            "$HOSTINGER_USERNAME@$HOSTINGER_HOST" \
+            "mkdir -p \"\$HOME/deploy-temp\""
+
+          sshpass -p "$HOSTINGER_PASSWORD" scp \
+            -P "$HOSTINGER_PORT" \
+            -o StrictHostKeyChecking=no \
+            .deploy/laravel_app.tar.gz \
+            .deploy/public_html.tar.gz \
+            "$HOSTINGER_USERNAME@$HOSTINGER_HOST:deploy-temp/"
+
+      - name: Deploy on Hostinger
         run: |
-          rsync -az --delete \
-            -e "ssh -i ~/.ssh/id_ed25519 -p 65002 -o StrictHostKeyChecking=no" \
-            ./public/build/ \
-            ${{ vars.HOSTINGER_USERNAME }}@${{ vars.HOSTINGER_HOST }}:/home/${{ vars.HOSTINGER_USERNAME }}/public_html/build/
+          set -euo pipefail
 
-      # ── 8. Run post-deploy commands on server ──────────────────────────────
-      - name: Post-deploy
-        run: |
-          ssh -i ~/.ssh/id_ed25519 \
-              -p 65002 \
-              -o StrictHostKeyChecking=no \
-              ${{ vars.HOSTINGER_USERNAME }}@${{ vars.HOSTINGER_HOST }} << 'ENDSSH'
-            set -e
-            cd ~/laravel_app
+          HOSTINGER_PORT="${HOSTINGER_PORT:-65002}"
+          HOSTINGER_PHP_BIN="${HOSTINGER_PHP_BIN:-php}"
 
-            php artisan down --render="errors::503" || true
-            php artisan optimize:clear
-            php artisan migrate --force
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
-            php artisan up
+          sshpass -p "$HOSTINGER_PASSWORD" ssh \
+            -p "$HOSTINGER_PORT" \
+            -o StrictHostKeyChecking=no \
+            "$HOSTINGER_USERNAME@$HOSTINGER_HOST" <<EOF
+          set -euo pipefail
 
-            echo "✅ Deploy complete!"
-          ENDSSH
+          APP_PATH="$HOSTINGER_APP_PATH"
+          PUBLIC_PATH="$HOSTINGER_PUBLIC_PATH"
+          PHP_BIN="$HOSTINGER_PHP_BIN"
+          TEMP_PATH="\$HOME/deploy-temp"
+
+          mkdir -p \
+            "\$APP_PATH" \
+            "\$PUBLIC_PATH" \
+            "\$APP_PATH/bootstrap/cache" \
+            "\$APP_PATH/storage/app/private" \
+            "\$APP_PATH/storage/app/public" \
+            "\$APP_PATH/storage/framework/cache/data" \
+            "\$APP_PATH/storage/framework/sessions" \
+            "\$APP_PATH/storage/framework/views" \
+            "\$APP_PATH/storage/logs"
+
+          if [ -f "\$APP_PATH/artisan" ]; then
+            cd "\$APP_PATH"
+            cleanup() {
+              "\$PHP_BIN" artisan up || true
+            }
+            trap cleanup EXIT
+            "\$PHP_BIN" artisan down || true
+          fi
+
+          rm -rf "\$TEMP_PATH/laravel_app" "\$TEMP_PATH/public_html"
+          tar -xzf "\$TEMP_PATH/laravel_app.tar.gz" -C "\$TEMP_PATH"
+          tar -xzf "\$TEMP_PATH/public_html.tar.gz" -C "\$TEMP_PATH"
+
+          rm -rf "\$PUBLIC_PATH/build"
+          cp -a "\$TEMP_PATH/laravel_app/." "\$APP_PATH/"
+          cp -a "\$TEMP_PATH/public_html/." "\$PUBLIC_PATH/"
+
+          if [ -L "\$PUBLIC_PATH/public" ]; then
+            rm "\$PUBLIC_PATH/public"
+          fi
+
+          ln -sfn "\$APP_PATH/storage/app/public" "\$PUBLIC_PATH/storage"
+          chmod -R ug+rw "\$APP_PATH/storage" "\$APP_PATH/bootstrap/cache" || true
+
+          cd "\$APP_PATH"
+          "\$PHP_BIN" artisan optimize:clear
+          "\$PHP_BIN" artisan migrate --force
+          "\$PHP_BIN" artisan config:cache
+          "\$PHP_BIN" artisan view:cache
+          "\$PHP_BIN" artisan up || true
+
+          rm -rf \
+            "\$TEMP_PATH/laravel_app" \
+            "\$TEMP_PATH/public_html" \
+            "\$TEMP_PATH/laravel_app.tar.gz" \
+            "\$TEMP_PATH/public_html.tar.gz"
+          EOF
