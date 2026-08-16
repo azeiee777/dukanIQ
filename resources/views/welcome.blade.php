@@ -39,13 +39,8 @@
     </script>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
 
     <style>
-        [x-cloak] {
-            display: none !important;
-        }
-
         /* Animations */
         @keyframes float {
 
@@ -87,22 +82,22 @@
 
     <nav
         class="fixed top-0 w-full z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 transition-colors duration-300">
-        <div class="max-w-7xl mx-auto px-6 lg:px-8">
-            <div class="flex justify-between items-center h-20">
-                <div class="flex items-center gap-3">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16 sm:h-20 gap-2">
+                <div class="flex items-center gap-2 sm:gap-3 min-w-0">
                     <div
-                        class="bg-gradient-to-br from-indigo-600 to-violet-600 p-2.5 rounded-xl shadow-lg shadow-indigo-500/30">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="bg-gradient-to-br from-indigo-600 to-violet-600 p-2 sm:p-2.5 rounded-xl shadow-lg shadow-indigo-500/30 flex-shrink-0">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                                 d="M13 10V3L4 14h7v7l9-11h-7z" />
                         </svg>
                     </div>
-                    <span class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">DukanIQ</span>
+                    <span class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight truncate">DukanIQ</span>
                 </div>
 
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-1 sm:gap-4 flex-shrink-0">
                     <button @click="toggleTheme()"
-                        class="p-2 mr-2 rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus:outline-none"
+                        class="p-2 sm:mr-2 rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus:outline-none"
                         aria-label="Toggle Dark Mode">
                         <svg x-show="!isDark" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -119,16 +114,16 @@
 
                     @auth
                         <a href="{{ url('/dashboard') }}"
-                            class="hidden sm:inline-flex px-6 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-400 rounded-xl shadow-lg shadow-indigo-500/30 transition-all duration-300 transform hover:-translate-y-0.5">
+                            class="inline-flex px-4 sm:px-6 py-2 sm:py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-400 rounded-xl shadow-lg shadow-indigo-500/30 transition-all duration-300 transform hover:-translate-y-0.5">
                             Dashboard
                         </a>
                     @else
                         <a href="{{ route('login') }}"
-                            class="px-5 py-2.5 text-sm font-semibold text-slate-600 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-white transition-colors">
+                            class="px-3 sm:px-5 py-2 sm:py-2.5 text-sm font-semibold text-slate-600 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-white transition-colors">
                             Log in
                         </a>
                         <a href="{{ route('register') }}"
-                            class="hidden sm:inline-flex px-6 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-400 rounded-xl shadow-lg shadow-indigo-500/30 transition-all duration-300 transform hover:-translate-y-0.5">
+                            class="inline-flex px-4 sm:px-6 py-2 sm:py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-400 rounded-xl shadow-lg shadow-indigo-500/30 transition-all duration-300 transform hover:-translate-y-0.5">
                             Get Started
                         </a>
                     @endauth
