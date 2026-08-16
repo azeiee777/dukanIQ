@@ -20,7 +20,7 @@ $maxWidth = [
     x-on:close-modal.window="$event.detail == '{{ $id }}' ? show = false : null"
     x-show="show"
     x-cloak
-    class="fixed inset-0 z-[70] overflow-y-auto px-4 py-6 sm:px-0"
+    class="fixed inset-0 z-[70]"
     style="display: none;"
 >
     <div
@@ -31,20 +31,25 @@ $maxWidth = [
         x-transition:leave="ease-in duration-200"
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
-        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
+        class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm"
         x-on:click="show = false"
     ></div>
 
-    <div
-        x-show="show"
-        x-transition:enter="ease-out duration-300"
-        x-transition:enter-start="opacity-0 translate-y-4 scale-95"
-        x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-        x-transition:leave="ease-in duration-200"
-        x-transition:leave-start="opacity-100 translate-y-0 scale-100"
-        x-transition:leave-end="opacity-0 translate-y-4 scale-95"
-        class="relative mb-6 w-full {{ $maxWidth }} mx-auto bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden"
-    >
-        {{ $slot }}
+    <div class="fixed inset-0 overflow-y-auto flex items-end sm:items-center justify-center">
+        <div
+            x-show="show"
+            x-transition:enter="ease-out duration-300"
+            x-transition:enter-start="opacity-0 translate-y-8 sm:translate-y-4 sm:scale-95"
+            x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+            x-transition:leave="ease-in duration-200"
+            x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+            x-transition:leave-end="opacity-0 translate-y-8 sm:translate-y-4 sm:scale-95"
+            class="relative w-full {{ $maxWidth }} sm:mb-6 mx-auto bg-white dark:bg-stone-900 rounded-t-3xl sm:rounded-3xl shadow-2xl border border-stone-200 dark:border-stone-800 overflow-hidden max-h-[92vh] overflow-y-auto"
+        >
+            <div class="sm:hidden flex justify-center pt-3 pb-1">
+                <div class="w-10 h-1.5 rounded-full bg-stone-300 dark:bg-stone-700"></div>
+            </div>
+            {{ $slot }}
+        </div>
     </div>
 </div>

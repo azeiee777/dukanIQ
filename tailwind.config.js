@@ -16,15 +16,36 @@ export default {
             fontFamily: {
                 sans: ['Inter', ...defaultTheme.fontFamily.sans],
             },
-            // Optional: Define premium brand colors here
             colors: {
+                // Brand primary: emerald (growth / income). Used for CTAs, links, active states.
                 primary: {
-                    50: '#eef2ff',
-                    500: '#6366f1',
-                    600: '#4f46e5',
-                    900: '#312e81',
-                }
-            }
+                    50: '#ecfdf5',
+                    100: '#d1fae5',
+                    200: '#a7f3d0',
+                    300: '#6ee7b7',
+                    400: '#34d399',
+                    500: '#10b981',
+                    600: '#059669',
+                    700: '#047857',
+                    800: '#065f46',
+                    900: '#064e3b',
+                    950: '#022c22',
+                },
+                // Secondary accent: teal. Used sparingly for secondary emphasis.
+                accent: {
+                    50: '#f0fdfa',
+                    100: '#ccfbf1',
+                    300: '#5eead4',
+                    400: '#2dd4bf',
+                    500: '#14b8a6',
+                    600: '#0d9488',
+                    700: '#0f766e',
+                },
+            },
+            boxShadow: {
+                'brand': '0 8px 24px -8px rgba(5, 150, 105, 0.35)',
+                'brand-lg': '0 16px 40px -12px rgba(5, 150, 105, 0.4)',
+            },
         },
     },
 

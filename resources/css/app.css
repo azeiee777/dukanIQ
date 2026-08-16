@@ -5,3 +5,28 @@
 [x-cloak] {
     display: none !important;
 }
+
+::selection {
+    background-color: theme('colors.primary.200');
+    color: theme('colors.primary.900');
+}
+
+.dark ::selection {
+    background-color: theme('colors.primary.800');
+    color: theme('colors.primary.50');
+}
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+@supports (padding: max(0px)) {
+    .safe-bottom {
+        padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+    }
+}
