@@ -52,20 +52,26 @@ class TransactionController extends Controller
             $request->all()
         );
 
-        $totalSales = $transactions->where('type', 'sale')->sum('amount');
-        $totalExpenses = $transactions->where('type', 'expense')->sum('amount');
+        $sales = $transactions->where('type', 'sale')->values();
+        $expenses = $transactions->where('type', 'expense')->values();
+
+        $totalSales = (float) $sales->sum('amount');
+        $totalExpenses = (float) $expenses->sum('amount');
         $netProfit = $totalSales - $totalExpenses;
 
-        $brandGreen = '059669';
-        $brandGreenDark = '047857';
-        $greenLight = 'ECFDF5';
-        $greenText = '047857';
-        $roseLight = 'FFF1F2';
-        $roseText = 'BE123C';
-        $roseSolid = 'E11D48';
-        $stoneLight = 'FAFAF9';
-        $stoneBorder = 'E7E5E4';
-        $stoneText = '44403C';
+        $palette = [
+            'green' => '059669',
+            'greenDark' => '047857',
+            'greenLight' => 'ECFDF5',
+            'greenText' => '047857',
+            'rose' => 'E11D48',
+            'roseDark' => 'BE123C',
+            'roseLight' => 'FFF1F2',
+            'roseText' => 'BE123C',
+            'stoneLight' => 'FAFAF9',
+            'stoneBorder' => 'E7E5E4',
+            'stoneText' => '78716C',
+        ];
 
         $spreadsheet = new Spreadsheet();
         $spreadsheet->getProperties()
@@ -76,107 +82,62 @@ class TransactionController extends Controller
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Transactions');
 
-        $columns = ['A', 'B', 'C', 'D', 'E'];
-        $sheet->getColumnDimension('A')->setWidth(14);
-        $sheet->getColumnDimension('B')->setWidth(12);
-        $sheet->getColumnDimension('C')->setWidth(16);
-        $sheet->getColumnDimension('D')->setWidth(42);
-        $sheet->getColumnDimension('E')->setWidth(18);
+        // Sales side: A-C. Gap: D. Expenses side: E-H.
+        $sheet->getColumnDimension('A')->setWidth(12);
+        $sheet->getColumnDimension('B')->setWidth(30);
+        $sheet->getColumnDimension('C')->setWidth(15);
+        $sheet->getColumnDimension('D')->setWidth(3);
+        $sheet->getColumnDimension('E')->setWidth(12);
+        $sheet->getColumnDimension('F')->setWidth(14);
+        $sheet->getColumnDimension('G')->setWidth(26);
+        $sheet->getColumnDimension('H')->setWidth(15);
 
         // --- Banner ---
-        $sheet->mergeCells('A1:E1');
+        $sheet->mergeCells('A1:H1');
         $sheet->setCellValue('A1', 'DukanIQ — Transaction Report');
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16)->getColor()->setRGB('FFFFFF');
-        $sheet->getStyle('A1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB($brandGreen);
+        $sheet->getStyle('A1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB($palette['green']);
         $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT)->setVertical(Alignment::VERTICAL_CENTER);
         $sheet->getRowDimension(1)->setRowHeight(32);
 
-        $sheet->mergeCells('A2:E2');
+        $sheet->mergeCells('A2:H2');
         $sheet->setCellValue('A2', $this->describeExportFilters($request) . '  •  Generated ' . now()->format('d M Y, h:i A'));
         $sheet->getStyle('A2')->getFont()->setItalic(true)->setSize(10)->getColor()->setRGB('FFFFFF');
-        $sheet->getStyle('A2')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB($brandGreenDark);
+        $sheet->getStyle('A2')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB($palette['greenDark']);
         $sheet->getStyle('A2')->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
         $sheet->getRowDimension(2)->setRowHeight(20);
 
-        // --- Table header ---
-        $headerRow = 4;
-        $headers = ['Date', 'Type', 'Category', 'Description', 'Amount (₹)'];
-        foreach ($columns as $i => $col) {
-            $sheet->setCellValue("{$col}{$headerRow}", $headers[$i]);
-        }
-        $sheet->getStyle("A{$headerRow}:E{$headerRow}")->getFont()->setBold(true)->getColor()->setRGB('FFFFFF');
-        $sheet->getStyle("A{$headerRow}:E{$headerRow}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB($brandGreen);
-        $sheet->getStyle("A{$headerRow}:E{$headerRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT)->setVertical(Alignment::VERTICAL_CENTER);
-        $sheet->getStyle("E{$headerRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
-        $sheet->getRowDimension($headerRow)->setRowHeight(22);
+        $sectionRow = 4;
 
-        // --- Data rows ---
-        $row = $headerRow + 1;
-        foreach ($transactions as $t) {
-            $isSale = $t->type === 'sale';
+        $salesLastRow = $this->writeSalesSide($sheet, $sectionRow, $sales, $palette);
+        $expensesLastRow = $this->writeExpensesSide($sheet, $sectionRow, $expenses, $palette);
 
-            $sheet->setCellValue("A{$row}", $t->date->format('d M Y'));
-            $sheet->setCellValue("B{$row}", $isSale ? 'Income' : 'Expense');
-            $sheet->setCellValue("C{$row}", $t->category ?? '-');
-            $sheet->setCellValue("D{$row}", $t->description);
-            $sheet->setCellValue("E{$row}", ($isSale ? 1 : -1) * $t->amount);
+        $sheet->freezePane('A' . ($sectionRow + 2));
 
-            $sheet->getStyle("E{$row}")->getNumberFormat()->setFormatCode('"₹"#,##0.00;[Red]-"₹"#,##0.00');
-            $sheet->getStyle("B{$row}")->getFont()->setBold(true)->getColor()->setRGB($isSale ? $greenText : $roseText);
-            $sheet->getStyle("E{$row}")->getFont()->setBold(true)->getColor()->setRGB($isSale ? $greenText : $roseText);
-            $sheet->getStyle("E{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+        // --- Final calculation, full width: Total Sales − Total Expenses = Net Profit/Loss ---
+        $finalRow = max($salesLastRow, $expensesLastRow) + 2;
 
-            if ($row % 2 === 0) {
-                $sheet->getStyle("A{$row}:E{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB($stoneLight);
-            }
-
-            $row++;
-        }
-        $lastDataRow = $row - 1;
-
-        if ($lastDataRow >= $headerRow + 1) {
-            $sheet->getStyle("A{$headerRow}:E{$lastDataRow}")
-                ->getBorders()->getAllBorders()
-                ->setBorderStyle(Border::BORDER_THIN)
-                ->getColor()->setRGB($stoneBorder);
-        }
-
-        $sheet->freezePane("A" . ($headerRow + 1));
-
-        // --- Summary block ---
-        $summaryRow = $lastDataRow + 2;
-
-        $this->writeExportSummaryRow(
-            $sheet,
-            $summaryRow,
-            'Total Sales (Income)',
-            $totalSales,
-            $greenLight,
-            $greenText,
-            false
+        $sheet->mergeCells("A{$finalRow}:E{$finalRow}");
+        $sheet->setCellValue(
+            "A{$finalRow}",
+            sprintf(
+                'NET PROFIT / LOSS   =   Total Sales ₹%s   −   Total Expenses ₹%s',
+                number_format($totalSales, 2),
+                number_format($totalExpenses, 2)
+            )
         );
+        $sheet->mergeCells("F{$finalRow}:H{$finalRow}");
+        $sheet->setCellValue("F{$finalRow}", $netProfit);
+        $sheet->getStyle("F{$finalRow}")->getNumberFormat()->setFormatCode('"₹"#,##0.00;-"₹"#,##0.00');
+        $sheet->getStyle("F{$finalRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
 
-        $this->writeExportSummaryRow(
-            $sheet,
-            $summaryRow + 1,
-            'Total Expenses',
-            -$totalExpenses,
-            $roseLight,
-            $roseText,
-            false
-        );
+        $netFill = $netProfit >= 0 ? $palette['green'] : $palette['rose'];
+        $sheet->getStyle("A{$finalRow}:H{$finalRow}")->getFont()->setBold(true)->setSize(13)->getColor()->setRGB('FFFFFF');
+        $sheet->getStyle("A{$finalRow}:H{$finalRow}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB($netFill);
+        $sheet->getStyle("A{$finalRow}:H{$finalRow}")->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->getRowDimension($finalRow)->setRowHeight(28);
 
-        $this->writeExportSummaryRow(
-            $sheet,
-            $summaryRow + 2,
-            'NET PROFIT',
-            $netProfit,
-            $netProfit >= 0 ? $brandGreen : $roseSolid,
-            'FFFFFF',
-            true
-        );
-
-        $sheet->getStyle("A1:E" . ($summaryRow + 2))->getFont()->setName('Calibri');
+        $sheet->getStyle("A1:H{$finalRow}")->getFont()->setName('Calibri');
 
         $writer = new Xlsx($spreadsheet);
         $filename = 'dukaniq-transactions-' . now()->format('Y-m-d-His') . '.xlsx';
@@ -189,21 +150,150 @@ class TransactionController extends Controller
         ]);
     }
 
-    private function writeExportSummaryRow($sheet, int $row, string $label, float $amount, string $fillRgb, string $textRgb, bool $emphasize): void
+    /**
+     * Writes the Sales/Income ledger side (columns A-C) starting at $sectionRow.
+     * Returns the last row used by this side (its own "Total Sales" row).
+     */
+    private function writeSalesSide($sheet, int $sectionRow, $sales, array $palette): int
     {
-        $sheet->mergeCells("A{$row}:D{$row}");
-        $sheet->setCellValue("A{$row}", $label);
-        $sheet->setCellValue("E{$row}", $amount);
-        $sheet->getStyle("E{$row}")->getNumberFormat()->setFormatCode('"₹"#,##0.00;-"₹"#,##0.00');
+        $sheet->mergeCells("A{$sectionRow}:C{$sectionRow}");
+        $sheet->setCellValue("A{$sectionRow}", 'SALES / INCOME');
+        $sheet->getStyle("A{$sectionRow}:C{$sectionRow}")->getFont()->setBold(true)->getColor()->setRGB('FFFFFF');
+        $sheet->getStyle("A{$sectionRow}:C{$sectionRow}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB($palette['green']);
+        $sheet->getStyle("A{$sectionRow}:C{$sectionRow}")->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->getRowDimension($sectionRow)->setRowHeight(20);
 
-        $sheet->getStyle("A{$row}:E{$row}")->getFont()
-            ->setBold(true)
-            ->setSize($emphasize ? 13 : 11)
-            ->getColor()->setRGB($textRgb);
-        $sheet->getStyle("A{$row}:E{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB($fillRgb);
-        $sheet->getStyle("A{$row}:E{$row}")->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
-        $sheet->getStyle("E{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
-        $sheet->getRowDimension($row)->setRowHeight($emphasize ? 26 : 22);
+        $headerRow = $sectionRow + 1;
+        $sheet->setCellValue("A{$headerRow}", 'Date');
+        $sheet->setCellValue("B{$headerRow}", 'Description');
+        $sheet->setCellValue("C{$headerRow}", 'Amount (₹)');
+        $sheet->getStyle("A{$headerRow}:C{$headerRow}")->getFont()->setBold(true)->getColor()->setRGB($palette['greenText']);
+        $sheet->getStyle("A{$headerRow}:C{$headerRow}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB($palette['greenLight']);
+        $sheet->getStyle("C{$headerRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+
+        $row = $headerRow + 1;
+
+        if ($sales->isEmpty()) {
+            $sheet->mergeCells("A{$row}:C{$row}");
+            $sheet->setCellValue("A{$row}", 'No income entries for this period.');
+            $sheet->getStyle("A{$row}")->getFont()->setItalic(true)->getColor()->setRGB($palette['stoneText']);
+            $row++;
+        } else {
+            foreach ($sales as $t) {
+                $sheet->setCellValue("A{$row}", $t->date->format('d M Y'));
+                $sheet->setCellValue("B{$row}", $t->description);
+                $sheet->setCellValue("C{$row}", (float) $t->amount);
+                $sheet->getStyle("C{$row}")->getNumberFormat()->setFormatCode('"₹"#,##0.00');
+                $sheet->getStyle("C{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                $sheet->getStyle("A{$row}:C{$row}")->getFont()->getColor()->setRGB($palette['greenText']);
+
+                if ($row % 2 === 0) {
+                    $sheet->getStyle("A{$row}:C{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB($palette['stoneLight']);
+                }
+
+                $row++;
+            }
+        }
+
+        $lastDataRow = $row - 1;
+        $sheet->getStyle("A{$headerRow}:C{$lastDataRow}")
+            ->getBorders()->getAllBorders()
+            ->setBorderStyle(Border::BORDER_THIN)
+            ->getColor()->setRGB($palette['stoneBorder']);
+
+        $totalRow = $row;
+        $sheet->mergeCells("A{$totalRow}:B{$totalRow}");
+        $sheet->setCellValue("A{$totalRow}", 'Total Sales');
+        $sheet->setCellValue("C{$totalRow}", (float) $sales->sum('amount'));
+        $sheet->getStyle("C{$totalRow}")->getNumberFormat()->setFormatCode('"₹"#,##0.00');
+        $sheet->getStyle("A{$totalRow}:C{$totalRow}")->getFont()->setBold(true)->getColor()->setRGB($palette['greenText']);
+        $sheet->getStyle("A{$totalRow}:C{$totalRow}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB($palette['greenLight']);
+        $sheet->getStyle("C{$totalRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+        $sheet->getRowDimension($totalRow)->setRowHeight(22);
+
+        return $totalRow;
+    }
+
+    /**
+     * Writes the Expenses ledger side (columns E-H) starting at $sectionRow,
+     * grouped by category with a subtotal under each group.
+     * Returns the last row used by this side (its own "Total Expenses" row).
+     */
+    private function writeExpensesSide($sheet, int $sectionRow, $expenses, array $palette): int
+    {
+        $sheet->mergeCells("E{$sectionRow}:H{$sectionRow}");
+        $sheet->setCellValue("E{$sectionRow}", 'EXPENSES');
+        $sheet->getStyle("E{$sectionRow}:H{$sectionRow}")->getFont()->setBold(true)->getColor()->setRGB('FFFFFF');
+        $sheet->getStyle("E{$sectionRow}:H{$sectionRow}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB($palette['rose']);
+        $sheet->getStyle("E{$sectionRow}:H{$sectionRow}")->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+
+        $headerRow = $sectionRow + 1;
+        $sheet->setCellValue("E{$headerRow}", 'Date');
+        $sheet->setCellValue("F{$headerRow}", 'Category');
+        $sheet->setCellValue("G{$headerRow}", 'Description');
+        $sheet->setCellValue("H{$headerRow}", 'Amount (₹)');
+        $sheet->getStyle("E{$headerRow}:H{$headerRow}")->getFont()->setBold(true)->getColor()->setRGB($palette['roseText']);
+        $sheet->getStyle("E{$headerRow}:H{$headerRow}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB($palette['roseLight']);
+        $sheet->getStyle("H{$headerRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+
+        $row = $headerRow + 1;
+
+        if ($expenses->isEmpty()) {
+            $sheet->mergeCells("E{$row}:H{$row}");
+            $sheet->setCellValue("E{$row}", 'No expense entries for this period.');
+            $sheet->getStyle("E{$row}")->getFont()->setItalic(true)->getColor()->setRGB($palette['stoneText']);
+            $row++;
+        } else {
+            $groups = $expenses->groupBy(fn ($t) => $t->category ?: 'Other')->sortKeys();
+
+            foreach ($groups as $category => $items) {
+                foreach ($items as $t) {
+                    $sheet->setCellValue("E{$row}", $t->date->format('d M Y'));
+                    $sheet->setCellValue("F{$row}", $t->category ?? '-');
+                    $sheet->setCellValue("G{$row}", $t->description);
+                    $sheet->setCellValue("H{$row}", (float) $t->amount);
+                    $sheet->getStyle("H{$row}")->getNumberFormat()->setFormatCode('"₹"#,##0.00');
+                    $sheet->getStyle("H{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                    $sheet->getStyle("E{$row}:H{$row}")->getFont()->getColor()->setRGB($palette['roseText']);
+
+                    if ($row % 2 === 0) {
+                        $sheet->getStyle("E{$row}:H{$row}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB($palette['stoneLight']);
+                    }
+
+                    $row++;
+                }
+
+                // Category subtotal, shown whenever more than one category is present.
+                if ($groups->count() > 1) {
+                    $sheet->mergeCells("E{$row}:G{$row}");
+                    $sheet->setCellValue("E{$row}", "Subtotal — {$category}");
+                    $sheet->setCellValue("H{$row}", (float) $items->sum('amount'));
+                    $sheet->getStyle("H{$row}")->getNumberFormat()->setFormatCode('"₹"#,##0.00');
+                    $sheet->getStyle("E{$row}:H{$row}")->getFont()->setItalic(true)->setBold(true)->setSize(9)->getColor()->setRGB($palette['stoneText']);
+                    $sheet->getStyle("E{$row}:H{$row}")->getBorders()->getTop()->setBorderStyle(Border::BORDER_THIN)->getColor()->setRGB($palette['stoneBorder']);
+                    $sheet->getStyle("H{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                    $row++;
+                }
+            }
+        }
+
+        $lastDataRow = $row - 1;
+        $sheet->getStyle("E{$headerRow}:H{$lastDataRow}")
+            ->getBorders()->getAllBorders()
+            ->setBorderStyle(Border::BORDER_THIN)
+            ->getColor()->setRGB($palette['stoneBorder']);
+
+        $totalRow = $row;
+        $sheet->mergeCells("E{$totalRow}:G{$totalRow}");
+        $sheet->setCellValue("E{$totalRow}", 'Total Expenses');
+        $sheet->setCellValue("H{$totalRow}", (float) $expenses->sum('amount'));
+        $sheet->getStyle("H{$totalRow}")->getNumberFormat()->setFormatCode('"₹"#,##0.00');
+        $sheet->getStyle("E{$totalRow}:H{$totalRow}")->getFont()->setBold(true)->getColor()->setRGB($palette['roseText']);
+        $sheet->getStyle("E{$totalRow}:H{$totalRow}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB($palette['roseLight']);
+        $sheet->getStyle("H{$totalRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+        $sheet->getRowDimension($totalRow)->setRowHeight(22);
+
+        return $totalRow;
     }
 
     private function describeExportFilters(Request $request): string
