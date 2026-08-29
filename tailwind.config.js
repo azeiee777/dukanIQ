@@ -4,7 +4,7 @@ import forms from '@tailwindcss/forms';
 
 /** @type {import('tailwindcss').Config} */
 export default {
-    darkMode: 'class', // <--- IMPORTANT: Add this line
+    darkMode: 'class',
     content: [
         './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
         './storage/framework/views/*.php',
@@ -17,34 +17,51 @@ export default {
                 sans: ['Inter', ...defaultTheme.fontFamily.sans],
             },
             colors: {
-                // Brand primary: emerald (growth / income). Used for CTAs, links, active states.
-                primary: {
-                    50: '#ecfdf5',
-                    100: '#d1fae5',
-                    200: '#a7f3d0',
-                    300: '#6ee7b7',
-                    400: '#34d399',
-                    500: '#10b981',
-                    600: '#059669',
-                    700: '#047857',
-                    800: '#065f46',
-                    900: '#064e3b',
-                    950: '#022c22',
+                // "Aurora" design system — dark-first, gradient-forward.
+                // Neutral scale (cool violet-black undertone). 50 = lightest (light-mode
+                // surfaces), 950 = near-black page background in dark mode.
+                ink: {
+                    50: '#F7F7FB',
+                    100: '#EFEFF7',
+                    200: '#E3E3EF',
+                    300: '#C9C9DC',
+                    400: '#9494A6',
+                    500: '#6B6B80',
+                    600: '#4A4A5E',
+                    700: '#2E2E3E',
+                    750: '#242432',
+                    800: '#1E1E2A',
+                    850: '#171720',
+                    900: '#12121C',
+                    950: '#0B0B14',
                 },
-                // Secondary accent: teal. Used sparingly for secondary emphasis.
-                accent: {
-                    50: '#f0fdfa',
-                    100: '#ccfbf1',
-                    300: '#5eead4',
-                    400: '#2dd4bf',
-                    500: '#14b8a6',
-                    600: '#0d9488',
-                    700: '#0f766e',
+                // Income / positive. A brighter, more saturated green than the old
+                // "primary" emerald — reads as data, not just brand color.
+                mint: {
+                    50: '#EFFDF8',
+                    100: '#D6FAEE',
+                    300: '#6EE7C8',
+                    400: '#22D3AA',
+                    500: '#0FB894',
+                    600: '#0B9578',
+                },
+                // Named aliases for the signature 3-stop gradient, used sparingly for
+                // hero moments (primary CTAs, active nav state, key data viz) — not
+                // every interactive element. Everyday interactive color is violet.
+                aurora: {
+                    violet: '#7C3AED',
+                    fuchsia: '#D946EF',
+                    amber: '#F59E0B',
                 },
             },
+            backgroundImage: {
+                'aurora-gradient': 'linear-gradient(135deg, #7C3AED 0%, #D946EF 55%, #F59E0B 100%)',
+                'aurora-gradient-soft': 'linear-gradient(135deg, rgba(124,58,237,0.15) 0%, rgba(217,70,239,0.15) 55%, rgba(245,158,11,0.15) 100%)',
+            },
             boxShadow: {
-                'brand': '0 8px 24px -8px rgba(5, 150, 105, 0.35)',
-                'brand-lg': '0 16px 40px -12px rgba(5, 150, 105, 0.4)',
+                'glow-violet': '0 8px 30px -8px rgba(124, 58, 237, 0.45)',
+                'glow-violet-lg': '0 20px 50px -12px rgba(124, 58, 237, 0.5)',
+                'glass': '0 8px 32px -8px rgba(11, 11, 20, 0.35)',
             },
         },
     },

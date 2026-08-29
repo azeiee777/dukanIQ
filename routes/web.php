@@ -2,7 +2,10 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportsController;
+use App\Http\Controllers\StockController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\UdhariController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -26,6 +29,11 @@ Route::get('/', function () {
 Route::middleware(['auth'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Stock / Udhari / Reports (V2 modules)
+    Route::get('/stock', [StockController::class, 'index'])->name('stock.index');
+    Route::get('/udhari', [UdhariController::class, 'index'])->name('udhari.index');
+    Route::get('/reports', [ReportsController::class, 'index'])->name('reports.index');
 
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

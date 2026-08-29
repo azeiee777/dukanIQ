@@ -2,13 +2,13 @@
     <div x-data="{ email: @js(old('email', '')) }">
         <div class="text-center mb-8">
             <a href="/"
-                class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-primary-600 to-accent-600 text-white shadow-lg shadow-primary-500/30 mb-5 hover:scale-105 transition-transform duration-200">
+                class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-aurora-gradient text-white shadow-glow-violet mb-5 hover:scale-105 transition-transform duration-200">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
             </a>
-            <h2 class="text-2xl font-semibold text-stone-900 dark:text-white tracking-tight">Welcome Back</h2>
-            <p class="text-stone-500 dark:text-stone-400 text-sm mt-2">Log in directly with your password, or choose OTP only if you want a one-time code</p>
+            <h2 class="text-2xl font-semibold text-ink-900 dark:text-white tracking-tight">Welcome Back</h2>
+            <p class="text-ink-500 dark:text-ink-400 text-sm mt-2">Log in directly with your password, or choose OTP only if you want a one-time code</p>
         </div>
 
         @if (session('status'))
@@ -38,11 +38,11 @@
 
             <div>
                 <label for="email"
-                    class="block text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wide mb-1.5 ml-1">Email
+                    class="block text-xs font-semibold text-ink-500 dark:text-ink-400 uppercase tracking-wide mb-1.5 ml-1">Email
                     Address</label>
                 <div class="relative group">
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                        <svg class="h-5 w-5 text-stone-400 group-focus-within:text-primary-500 transition-colors duration-200"
+                        <svg class="h-5 w-5 text-ink-400 group-focus-within:text-violet-500 transition-colors duration-200"
                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
@@ -50,7 +50,7 @@
                     </div>
                     <input id="email" type="email" name="email" x-model="email" value="{{ old('email') }}" required
                         autofocus autocomplete="username"
-                        class="w-full pl-10 pr-4 py-3 bg-stone-50 dark:bg-stone-900/50 border border-stone-200 dark:border-stone-700 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:focus:border-primary-400 text-stone-900 dark:text-white placeholder-stone-400 dark:placeholder-stone-500 transition-all duration-200 sm:text-sm"
+                        class="w-full pl-10 pr-4 py-3 bg-ink-50 dark:bg-ink-900/50 border border-ink-200 dark:border-ink-700 rounded-xl focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 dark:focus:border-violet-400 text-ink-900 dark:text-white placeholder-ink-400 dark:placeholder-ink-500 transition-all duration-200 sm:text-sm"
                         placeholder="you@example.com">
                 </div>
                 @error('email')
@@ -67,17 +67,17 @@
             <div x-data="{ show: false }">
                 <div class="flex items-center justify-between mb-1.5 ml-1">
                     <label for="password"
-                        class="block text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wide">Password</label>
+                        class="block text-xs font-semibold text-ink-500 dark:text-ink-400 uppercase tracking-wide">Password</label>
                     @if (Route::has('password.request'))
                         <a href="{{ route('password.request') }}"
-                            class="text-xs font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-500 transition-colors">
+                            class="text-xs font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-500 transition-colors">
                             Forgot password?
                         </a>
                     @endif
                 </div>
                 <div class="relative group">
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                        <svg class="h-5 w-5 text-stone-400 group-focus-within:text-primary-500 transition-colors duration-200"
+                        <svg class="h-5 w-5 text-ink-400 group-focus-within:text-violet-500 transition-colors duration-200"
                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -85,10 +85,10 @@
                     </div>
                     <input id="password" :type="show ? 'text' : 'password'" name="password" required
                         autocomplete="current-password"
-                        class="w-full pl-10 pr-12 py-3 bg-stone-50 dark:bg-stone-900/50 border border-stone-200 dark:border-stone-700 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:focus:border-primary-400 text-stone-900 dark:text-white placeholder-stone-400 dark:placeholder-stone-500 transition-all duration-200 sm:text-sm"
+                        class="w-full pl-10 pr-12 py-3 bg-ink-50 dark:bg-ink-900/50 border border-ink-200 dark:border-ink-700 rounded-xl focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 dark:focus:border-violet-400 text-ink-900 dark:text-white placeholder-ink-400 dark:placeholder-ink-500 transition-all duration-200 sm:text-sm"
                         placeholder="••••••••">
                     <button type="button" @click="show = !show"
-                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 focus:outline-none transition-colors">
+                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-ink-400 hover:text-ink-600 dark:hover:text-ink-300 focus:outline-none transition-colors">
                         <svg x-show="!show" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -114,7 +114,7 @@
             </div>
 
             <button type="submit"
-                class="w-full py-4 rounded-xl font-semibold text-white bg-primary-600 hover:bg-primary-700 shadow-lg shadow-primary-500/30 transition-all duration-200 transform active:scale-[0.98] flex items-center justify-center gap-2">
+                class="w-full py-4 rounded-xl font-semibold text-white bg-aurora-gradient hover:brightness-110 shadow-glow-violet transition-all duration-200 transform active:scale-[0.98] flex items-center justify-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M15.75 8.25V6.75a3.75 3.75 0 10-7.5 0v1.5m9 0h-10.5A1.5 1.5 0 005.25 9.75v7.5a1.5 1.5 0 001.5 1.5h10.5a1.5 1.5 0 001.5-1.5v-7.5a1.5 1.5 0 00-1.5-1.5zm-5.25 3v3" />
@@ -124,9 +124,9 @@
         </form>
 
         <div class="my-6 flex items-center gap-4">
-            <div class="h-px flex-1 bg-stone-200 dark:bg-stone-700"></div>
-            <span class="text-xs font-semibold uppercase tracking-[0.2em] text-stone-400 dark:text-stone-500">or</span>
-            <div class="h-px flex-1 bg-stone-200 dark:bg-stone-700"></div>
+            <div class="h-px flex-1 bg-ink-200 dark:bg-ink-700"></div>
+            <span class="text-xs font-semibold uppercase tracking-[0.2em] text-ink-400 dark:text-ink-500">or</span>
+            <div class="h-px flex-1 bg-ink-200 dark:bg-ink-700"></div>
         </div>
 
         <form method="POST" action="{{ route('otp.send') }}" class="space-y-4">
@@ -135,8 +135,8 @@
             <input type="hidden" name="purpose" value="{{ \App\Models\Otp::PURPOSE_LOGIN }}">
 
             <button type="submit" :disabled="!email"
-                :class="email ? 'bg-white dark:bg-stone-900/40 hover:border-primary-300 hover:text-primary-600 dark:hover:text-primary-300' : 'bg-white/70 dark:bg-stone-900/30 text-stone-400 cursor-not-allowed'"
-                class="w-full py-4 rounded-xl font-semibold border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 transition-all duration-200 flex items-center justify-center gap-2">
+                :class="email ? 'bg-white dark:bg-ink-900/40 hover:border-violet-300 hover:text-violet-600 dark:hover:text-violet-300' : 'bg-white/70 dark:bg-ink-900/30 text-ink-400 cursor-not-allowed'"
+                class="w-full py-4 rounded-xl font-semibold border border-ink-200 dark:border-ink-700 text-ink-700 dark:text-ink-200 transition-all duration-200 flex items-center justify-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -145,11 +145,11 @@
             </button>
         </form>
 
-        <div class="text-center pt-6 border-t border-stone-100 dark:border-stone-700/50 mt-6">
-            <p class="text-sm text-stone-500 dark:text-stone-400">
+        <div class="text-center pt-6 border-t border-ink-100 dark:border-ink-700/50 mt-6">
+            <p class="text-sm text-ink-500 dark:text-ink-400">
                 Don't have a shop account?
                 <a href="{{ route('register') }}"
-                    class="font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-500 dark:hover:text-primary-300 transition-colors ml-1">
+                    class="font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-500 dark:hover:text-violet-300 transition-colors ml-1">
                     Get Started
                 </a>
             </p>

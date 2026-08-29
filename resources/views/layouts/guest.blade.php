@@ -14,25 +14,24 @@
         rel="stylesheet">
 
     <script>
-        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia(
-                '(prefers-color-scheme: dark)').matches)) {
+        if (localStorage.getItem('theme') !== 'light') {
             document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
         }
     </script>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body class="h-full font-sans text-stone-900 antialiased bg-stone-50 dark:bg-stone-950 dark:text-stone-100 transition-colors duration-300">
-    <div class="relative min-h-screen flex flex-col sm:justify-center items-center px-4 pt-10 sm:pt-6 pb-10">
-        <div class="fixed inset-0 -z-10 opacity-[0.04] dark:opacity-[0.06]"
-            style="background-image: radial-gradient(currentColor 1px, transparent 1px); background-size: 22px 22px; color: theme('colors.primary.600');">
+<body class="h-full font-sans text-ink-900 antialiased bg-ink-50 dark:bg-ink-950 dark:text-ink-50 transition-colors duration-300">
+    <div class="relative min-h-screen flex flex-col sm:justify-center items-center px-4 pt-10 sm:pt-6 pb-10 overflow-hidden">
+        <div class="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+            <div class="absolute -top-40 left-1/4 w-[500px] h-[500px] bg-aurora-violet/15 rounded-full blur-[120px]"></div>
+            <div class="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-fuchsia-500/10 rounded-full blur-[120px]"></div>
+            <div class="absolute top-1/2 right-10 w-[300px] h-[300px] bg-amber-500/10 rounded-full blur-[100px]"></div>
         </div>
 
         <button @click="toggleTheme()"
-            class="fixed top-4 right-4 sm:top-6 sm:right-6 z-20 p-2.5 rounded-xl bg-white/80 dark:bg-stone-900/80 backdrop-blur-md shadow-sm border border-stone-200 dark:border-stone-800 text-stone-500 dark:text-stone-400 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-200"
+            class="fixed top-4 right-4 sm:top-6 sm:right-6 z-20 p-2.5 rounded-xl bg-white/70 dark:bg-ink-900/70 glass-panel shadow-sm border border-ink-200/70 dark:border-ink-700/70 text-ink-500 dark:text-ink-400 hover:text-aurora-violet dark:hover:text-fuchsia-400 transition-all duration-200"
             aria-label="Toggle Dark Mode">
             <svg x-show="!isDark" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -47,11 +46,11 @@
         </button>
 
         <div
-            class="w-full sm:max-w-md px-6 py-8 sm:px-8 sm:py-10 bg-white dark:bg-stone-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] border border-stone-200 dark:border-stone-800 rounded-3xl z-10 relative transition-colors duration-300">
+            class="w-full sm:max-w-md px-6 py-8 sm:px-8 sm:py-10 bg-white/80 dark:bg-ink-900/60 glass-panel shadow-glass border border-ink-200/70 dark:border-ink-800/70 rounded-3xl z-10 relative transition-colors duration-300">
             {{ $slot }}
         </div>
 
-        <div class="mt-8 text-center text-xs text-stone-400 dark:text-stone-600 z-10 font-medium">
+        <div class="mt-8 text-center text-xs text-ink-400 dark:text-ink-600 z-10 font-medium">
             &copy; {{ date('Y') }} DukanIQ. Secure &amp; Encrypted.
         </div>
     </div>
@@ -59,8 +58,7 @@
     <script>
         function themeHandler() {
             return {
-                isDark: localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia(
-                    '(prefers-color-scheme: dark)').matches),
+                isDark: localStorage.getItem('theme') !== 'light',
                 toggleTheme() {
                     this.isDark = !this.isDark;
                     localStorage.setItem('theme', this.isDark ? 'dark' : 'light');

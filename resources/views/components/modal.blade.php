@@ -31,7 +31,7 @@ $maxWidth = [
         x-transition:leave="ease-in duration-200"
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
-        class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm"
+        class="fixed inset-0 bg-ink-950/70 backdrop-blur-sm"
         x-on:click="show = false"
     ></div>
 
@@ -44,10 +44,10 @@ $maxWidth = [
             x-transition:leave="ease-in duration-200"
             x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
             x-transition:leave-end="opacity-0 translate-y-8 sm:translate-y-4 sm:scale-95"
-            class="relative w-full {{ $maxWidth }} sm:mb-6 mx-auto bg-white dark:bg-stone-900 rounded-t-3xl sm:rounded-3xl shadow-2xl border border-stone-200 dark:border-stone-800 overflow-hidden max-h-[92vh] overflow-y-auto"
+            class="relative w-full {{ $maxWidth }} sm:mb-6 mx-auto bg-white/90 dark:bg-ink-850/90 glass-panel rounded-t-3xl sm:rounded-3xl shadow-glass border border-ink-200/70 dark:border-ink-700/70 overflow-hidden max-h-[92vh] overflow-y-auto"
         >
             <div class="sm:hidden flex justify-center pt-3 pb-1">
-                <div class="w-10 h-1.5 rounded-full bg-stone-300 dark:bg-stone-700"></div>
+                <div class="w-10 h-1.5 rounded-full bg-ink-300 dark:bg-ink-700"></div>
             </div>
             {{ $slot }}
         </div>

@@ -7,13 +7,13 @@
 }
 
 ::selection {
-    background-color: theme('colors.primary.200');
-    color: theme('colors.primary.900');
+    background-color: theme('colors.aurora.violet' / 25%);
+    color: theme('colors.ink.900');
 }
 
 .dark ::selection {
-    background-color: theme('colors.primary.800');
-    color: theme('colors.primary.50');
+    background-color: theme('colors.aurora.violet' / 45%);
+    color: theme('colors.white');
 }
 
 .no-scrollbar::-webkit-scrollbar {
@@ -29,4 +29,19 @@
     .safe-bottom {
         padding-bottom: max(env(safe-area-inset-bottom), 1rem);
     }
+}
+
+/* Gradient text — the signature Aurora treatment for hero headings and key figures. */
+.text-aurora {
+    background-image: linear-gradient(135deg, #7C3AED 0%, #D946EF 55%, #F59E0B 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Glass card — the default surface treatment across the app. Composed with
+   backdrop-blur-xl in markup; this covers the fallback + Safari prefix. */
+.glass-panel {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
 }

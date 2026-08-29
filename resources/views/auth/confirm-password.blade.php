@@ -1,13 +1,13 @@
 ﻿<x-guest-layout>
     <div class="text-center mb-8">
         <a href="/"
-            class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-primary-600 to-accent-600 text-white shadow-lg shadow-primary-500/30 mb-5 hover:scale-105 transition-transform duration-200">
+            class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-aurora-gradient text-white shadow-glow-violet mb-5 hover:scale-105 transition-transform duration-200">
             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
         </a>
-        <h2 class="text-2xl font-semibold text-stone-900 dark:text-white tracking-tight">Confirm Password</h2>
-        <p class="text-stone-500 dark:text-stone-400 text-sm mt-2 max-w-sm mx-auto">
+        <h2 class="text-2xl font-semibold text-ink-900 dark:text-white tracking-tight">Confirm Password</h2>
+        <p class="text-ink-500 dark:text-ink-400 text-sm mt-2 max-w-sm mx-auto">
             {{ __('This is a secure area of the application. Please confirm your password before continuing.') }}
         </p>
     </div>

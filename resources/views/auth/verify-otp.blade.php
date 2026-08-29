@@ -5,15 +5,15 @@
 
     <div class="text-center mb-8">
         <a href="/"
-            class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-primary-600 to-accent-600 text-white shadow-lg shadow-primary-500/30 mb-5 hover:scale-105 transition-transform duration-200">
+            class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-aurora-gradient text-white shadow-glow-violet mb-5 hover:scale-105 transition-transform duration-200">
             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
         </a>
-        <h2 class="text-2xl font-semibold text-stone-900 dark:text-white tracking-tight">
+        <h2 class="text-2xl font-semibold text-ink-900 dark:text-white tracking-tight">
             {{ $isSignup ? 'Verify Your Email' : 'Login with OTP' }}
         </h2>
-        <p class="text-stone-500 dark:text-stone-400 text-sm mt-2">
+        <p class="text-ink-500 dark:text-ink-400 text-sm mt-2">
             {{ $isSignup ? 'Complete your registration by verifying your email' : 'Enter the code sent to your email to sign in' }}
         </p>
     </div>
@@ -71,7 +71,7 @@
 
         <div>
             <label for="otp-digit-0"
-                class="block text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wide mb-1.5 ml-1">Verification Code</label>
+                class="block text-xs font-semibold text-ink-500 dark:text-ink-400 uppercase tracking-wide mb-1.5 ml-1">Verification Code</label>
             <div class="flex items-center justify-center gap-2 sm:gap-2.5">
                 <template x-for="(digit, index) in otpDigits" :key="index">
                     <input :id="digitInputId(index)" type="text" inputmode="numeric" maxlength="1"
@@ -84,18 +84,18 @@
                         @keydown.right.prevent="focusDigit(index + 1)"
                         @focus="selectDigit(index)"
                         @paste="handlePaste($event, index)"
-                        class="h-12 w-10 flex-none rounded-2xl border border-stone-200/90 bg-white/95 text-center text-lg font-bold tracking-[0.08em] text-stone-900 outline-none ring-1 ring-white/90 transition-all duration-200 shadow-[0_12px_24px_-18px_rgba(5,150,105,0.5),inset_0_1px_0_rgba(255,255,255,0.9)] focus:-translate-y-0.5 focus:border-primary-400 focus:ring-2 focus:ring-primary-500/20 focus:shadow-[0_18px_30px_-18px_rgba(4,120,87,0.55)] dark:border-stone-700 dark:bg-stone-950/90 dark:text-white dark:ring-stone-800/80 sm:h-14 sm:w-11 sm:text-xl"
-                        :class="(digit ? 'border-primary-300/90 text-primary-600 shadow-[0_16px_28px_-18px_rgba(4,120,87,0.55),inset_0_1px_0_rgba(255,255,255,0.9)] dark:border-primary-500/50 dark:text-primary-300' : 'text-stone-400 dark:text-stone-500') + (index === 2 ? ' mr-2.5 sm:mr-3.5' : '')">
+                        class="h-12 w-10 flex-none rounded-2xl border border-ink-200/90 bg-white/95 text-center text-lg font-bold tracking-[0.08em] text-ink-900 outline-none ring-1 ring-white/90 transition-all duration-200 shadow-[0_12px_24px_-18px_rgba(124,58,237,0.5),inset_0_1px_0_rgba(255,255,255,0.9)] focus:-translate-y-0.5 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20 focus:shadow-[0_18px_30px_-18px_rgba(109,40,217,0.55)] dark:border-ink-700 dark:bg-ink-950/90 dark:text-white dark:ring-ink-800/80 sm:h-14 sm:w-11 sm:text-xl"
+                        :class="(digit ? 'border-violet-300/90 text-violet-600 shadow-[0_16px_28px_-18px_rgba(109,40,217,0.55),inset_0_1px_0_rgba(255,255,255,0.9)] dark:border-violet-500/50 dark:text-violet-300' : 'text-ink-400 dark:text-ink-500') + (index === 2 ? ' mr-2.5 sm:mr-3.5' : '')">
                 </template>
             </div>
-            <p class="text-xs text-stone-500 dark:text-stone-400 mt-2 text-center">
+            <p class="text-xs text-ink-500 dark:text-ink-400 mt-2 text-center">
                 Enter the 6-digit code sent to <strong>{{ $email }}</strong>
             </p>
         </div>
 
         <div class="space-y-3">
             <button @click="verifyOtp()" :disabled="otp.length !== 6 || loading"
-                :class="otp.length === 6 && !loading ? 'bg-primary-600 hover:bg-primary-700 shadow-lg shadow-primary-500/30' : 'bg-stone-300 dark:bg-stone-600 cursor-not-allowed'"
+                :class="otp.length === 6 && !loading ? 'bg-aurora-gradient hover:brightness-110 shadow-glow-violet' : 'bg-ink-300 dark:bg-ink-600 cursor-not-allowed'"
                 class="w-full py-4 rounded-xl font-semibold text-white transition-all duration-200 transform active:scale-[0.98] flex items-center justify-center gap-2">
                 <span x-show="!loading">{{ $isSignup ? 'Verify Email' : 'Login with OTP' }}</span>
                 <span x-show="loading" class="flex items-center gap-2">
@@ -109,7 +109,7 @@
 
             <div class="text-center">
                 <button @click="resendOtp()" :disabled="countdown > 0 || resendLoading"
-                    :class="countdown > 0 || resendLoading ? 'text-stone-400 cursor-not-allowed' : 'text-primary-600 hover:text-primary-700'"
+                    :class="countdown > 0 || resendLoading ? 'text-ink-400 cursor-not-allowed' : 'text-violet-600 hover:text-violet-700'"
                     class="text-sm font-medium transition-colors duration-200">
                     <span x-show="countdown > 0 && !resendLoading" x-text="`Resend code in ${countdown}s`"></span>
                     <span x-show="countdown <= 0 && !resendLoading">Didn't receive code? Resend</span>
@@ -126,7 +126,7 @@
 
         <div class="text-center">
             <a href="{{ route('login') }}"
-                class="text-sm text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 transition-colors duration-200">
+                class="text-sm text-ink-500 dark:text-ink-400 hover:text-ink-700 dark:hover:text-ink-200 transition-colors duration-200">
                 {{ $isSignup ? '← Back to login' : '← Use password instead' }}
             </a>
         </div>

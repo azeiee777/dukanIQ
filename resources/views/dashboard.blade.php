@@ -45,8 +45,8 @@
         .dashboard-entry-dock {
             position: fixed;
             right: 1rem;
-            bottom: 1.25rem;
-            z-index: 70;
+            bottom: 5.5rem;
+            z-index: 45;
             pointer-events: none;
         }
 
@@ -57,23 +57,23 @@
             justify-content: center;
             width: 3.5rem;
             height: 3.5rem;
-            border: 1px solid rgba(16, 185, 129, 0.3);
+            border: 1px solid rgba(124, 58, 237, 0.35);
             border-radius: 9999px;
-            background: linear-gradient(135deg, #10b981 0%, #059669 55%, #0d9488 100%);
+            background: linear-gradient(135deg, #7C3AED 0%, #D946EF 55%, #F59E0B 100%);
             color: #fff;
-            box-shadow: 0 22px 40px -20px rgba(5, 150, 105, 0.75);
+            box-shadow: 0 22px 40px -20px rgba(124, 58, 237, 0.8);
             transition: transform 0.22s ease, box-shadow 0.22s ease, filter 0.22s ease;
         }
 
         .dashboard-entry-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 26px 48px -22px rgba(5, 150, 105, 0.85);
-            filter: brightness(1.03);
+            box-shadow: 0 26px 48px -22px rgba(124, 58, 237, 0.9);
+            filter: brightness(1.05);
         }
 
         .dashboard-entry-button:focus-visible {
             outline: 0;
-            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2), 0 26px 48px -22px rgba(5, 150, 105, 0.85);
+            box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.25), 0 26px 48px -22px rgba(124, 58, 237, 0.9);
         }
 
         .dashboard-entry-icon-wrap {
@@ -92,7 +92,7 @@
             letter-spacing: 0.01em;
         }
 
-        @media (min-width: 640px) {
+        @media (min-width: 1024px) {
             .dashboard-entry-dock {
                 right: 1.5rem;
                 bottom: 1.5rem;
@@ -110,8 +110,8 @@
                 width: 2.5rem;
                 height: 2.5rem;
                 border-radius: 0.95rem;
-                background: rgba(255, 255, 255, 0.14);
-                box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+                background: rgba(255, 255, 255, 0.16);
+                box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
             }
 
             .dashboard-entry-label {
@@ -201,11 +201,11 @@
         defaultForm: {{ \Illuminate\Support\Js::from($initialForm) }}
     })" x-init="init()" x-on:keydown.escape.window="closeModal()" class="relative min-h-screen">
 
-        <div class="pb-32 animate-fade-in">
+        <div class="pb-4 animate-fade-in">
             <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8">
                 <div>
-                    <h1 class="text-2xl sm:text-3xl font-bold text-stone-900 dark:text-white tracking-tight mb-2">Dashboard</h1>
-                    <p class="text-stone-600 dark:text-stone-400 font-medium flex items-center gap-2">
+                    <h1 class="text-2xl sm:text-3xl font-bold text-ink-900 dark:text-white tracking-tight mb-2">Dashboard</h1>
+                    <p class="text-ink-500 dark:text-ink-400 font-medium flex items-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
@@ -223,20 +223,20 @@
                 </div>
 
                 <div
-                    class="bg-white dark:bg-stone-800 p-1.5 rounded-2xl shadow-sm border border-stone-200 dark:border-stone-700 inline-flex flex-wrap gap-1">
+                    class="bg-white/70 dark:bg-ink-900/50 glass-panel p-1.5 rounded-2xl shadow-glass border border-ink-200/70 dark:border-ink-800/70 inline-flex flex-wrap gap-1">
                     @foreach (['all' => 'All Time', 'month' => 'This Month', 'today' => 'Today'] as $key => $label)
                         <a href="{{ route('dashboard', ['date' => $key, 'type' => request('type'), 'category' => request('category')]) }}"
                             class="px-4 py-2 text-xs font-semibold rounded-xl transition-all duration-200
                         {{ $currentFilters['date'] === $key && !request('start_date')
-                            ? 'bg-stone-900 dark:bg-primary-600 text-white shadow-md'
-                            : 'text-stone-600 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-700 hover:text-stone-900 dark:hover:text-stone-200' }}">
+                            ? 'bg-aurora-gradient text-white shadow-glow-violet'
+                            : 'text-ink-500 dark:text-ink-400 hover:bg-ink-100/70 dark:hover:bg-ink-800/60 hover:text-ink-900 dark:hover:text-white' }}">
                             {{ $label }}
                         </a>
                     @endforeach
 
                     <button @click="showDateFilters = !showDateFilters"
-                        :class="showDateFilters ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400' :
-                            'text-stone-600 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-700'"
+                        :class="showDateFilters ? 'text-aurora-violet dark:text-fuchsia-400 bg-aurora-gradient-soft' :
+                            'text-ink-500 dark:text-ink-400 hover:bg-ink-100/70 dark:hover:bg-ink-800/60'"
                         class="px-4 py-2 text-xs font-semibold rounded-xl transition-all duration-200 flex items-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -249,7 +249,7 @@
             </div>
 
             <div x-show="showDateFilters" style="display: none;"
-                class="bg-white dark:bg-stone-800 p-6 rounded-3xl border border-stone-200 dark:border-stone-700 shadow-sm mb-8 mt-2 animate-fade-in">
+                class="bg-white/70 dark:bg-ink-900/50 glass-panel p-6 rounded-3xl border border-ink-200/70 dark:border-ink-800/70 shadow-glass mb-8 mt-2 animate-fade-in">
                 <form method="GET" action="{{ route('dashboard') }}"
                     class="flex flex-col sm:flex-row gap-4 items-end">
                     <input type="hidden" name="type" value="{{ request('type', 'all') }}">
@@ -257,28 +257,28 @@
 
                     <div class="flex-1 w-full">
                         <label
-                            class="block text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-2">Start
+                            class="block text-xs font-semibold text-ink-500 dark:text-ink-400 uppercase tracking-wider mb-2">Start
                             Date</label>
                         <input type="date" name="start_date" value="{{ request('start_date') }}"
-                            class="w-full px-4 py-2.5 text-sm font-medium rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 text-stone-900 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all">
+                            class="w-full px-4 py-2.5 text-sm font-medium rounded-xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-800/60 text-ink-900 dark:text-white focus:border-aurora-violet focus:ring-2 focus:ring-aurora-violet/20 transition-all">
                     </div>
 
                     <div class="flex-1 w-full">
                         <label
-                            class="block text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-2">End
+                            class="block text-xs font-semibold text-ink-500 dark:text-ink-400 uppercase tracking-wider mb-2">End
                             Date</label>
                         <input type="date" name="end_date" value="{{ request('end_date') }}"
-                            class="w-full px-4 py-2.5 text-sm font-medium rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 text-stone-900 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all">
+                            class="w-full px-4 py-2.5 text-sm font-medium rounded-xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-800/60 text-ink-900 dark:text-white focus:border-aurora-violet focus:ring-2 focus:ring-aurora-violet/20 transition-all">
                     </div>
 
                     <div class="flex gap-2 w-full sm:w-auto">
                         <button type="submit"
-                            class="flex-1 sm:flex-none px-6 py-2.5 text-sm font-semibold rounded-xl bg-primary-600 hover:bg-primary-700 text-white shadow-brand transition-all transform hover:-translate-y-0.5">
+                            class="flex-1 sm:flex-none px-6 py-2.5 text-sm font-semibold rounded-xl bg-aurora-gradient hover:brightness-110 text-white shadow-glow-violet transition-all transform hover:-translate-y-0.5">
                             Apply
                         </button>
                         @if (request('start_date') || request('end_date'))
                             <a href="{{ route('dashboard', ['type' => request('type'), 'category' => request('category')]) }}"
-                                class="px-4 py-2.5 text-sm font-semibold rounded-xl bg-stone-100 dark:bg-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-600 transition-all">
+                                class="px-4 py-2.5 text-sm font-semibold rounded-xl bg-ink-100 dark:bg-ink-800 text-ink-600 dark:text-ink-300 hover:bg-ink-200 dark:hover:bg-ink-700 transition-all">
                                 Clear
                             </a>
                         @endif
@@ -288,11 +288,11 @@
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-10">
                 <div
-                    class="bg-white dark:bg-stone-800 p-5 sm:p-6 rounded-3xl border border-stone-200 dark:border-stone-700 shadow-sm hover:shadow-lg transition-all duration-300 group">
+                    class="bg-white/70 dark:bg-ink-900/50 glass-panel p-5 sm:p-6 rounded-3xl border border-ink-200/70 dark:border-ink-800/70 shadow-glass hover:shadow-glow-violet transition-all duration-300 group">
                     <div class="flex justify-between items-start mb-5 sm:mb-6">
                         <div
-                            class="bg-primary-50 dark:bg-primary-900/20 p-3.5 rounded-2xl group-hover:scale-110 transition-transform duration-300">
-                            <svg class="w-6 h-6 text-primary-600 dark:text-primary-400" fill="none"
+                            class="bg-mint-50 dark:bg-mint-500/10 p-3.5 rounded-2xl group-hover:scale-110 transition-transform duration-300">
+                            <svg class="w-6 h-6 text-mint-500" fill="none"
                                 stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -300,19 +300,19 @@
                         </div>
                     </div>
                     <div>
-                        <p class="text-stone-500 dark:text-stone-400 text-xs font-semibold uppercase tracking-wider mb-1">
+                        <p class="text-ink-500 dark:text-ink-400 text-xs font-semibold uppercase tracking-wider mb-1">
                             Total Sales</p>
-                        <h3 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-stone-900 dark:text-white">
+                        <h3 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-ink-900 dark:text-white">
                             ₹{{ number_format($stats['income']) }}</h3>
                     </div>
                 </div>
 
                 <div
-                    class="bg-white dark:bg-stone-800 p-5 sm:p-6 rounded-3xl border border-stone-200 dark:border-stone-700 shadow-sm hover:shadow-lg transition-all duration-300 group">
+                    class="bg-white/70 dark:bg-ink-900/50 glass-panel p-5 sm:p-6 rounded-3xl border border-ink-200/70 dark:border-ink-800/70 shadow-glass hover:shadow-lg transition-all duration-300 group">
                     <div class="flex justify-between items-start mb-5 sm:mb-6">
                         <div
-                            class="bg-rose-50 dark:bg-rose-900/20 p-3.5 rounded-2xl group-hover:scale-110 transition-transform duration-300">
-                            <svg class="w-6 h-6 text-rose-600 dark:text-rose-400" fill="none" stroke="currentColor"
+                            class="bg-rose-50 dark:bg-rose-500/10 p-3.5 rounded-2xl group-hover:scale-110 transition-transform duration-300">
+                            <svg class="w-6 h-6 text-rose-500" fill="none" stroke="currentColor"
                                 viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -320,15 +320,15 @@
                         </div>
                     </div>
                     <div>
-                        <p class="text-stone-500 dark:text-stone-400 text-xs font-semibold uppercase tracking-wider mb-1">
+                        <p class="text-ink-500 dark:text-ink-400 text-xs font-semibold uppercase tracking-wider mb-1">
                             Total Expenses</p>
-                        <h3 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-stone-900 dark:text-white">
+                        <h3 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-ink-900 dark:text-white">
                             ₹{{ number_format($stats['expense']) }}</h3>
                     </div>
                 </div>
 
                 <div
-                    class="relative overflow-hidden bg-gradient-to-br from-primary-600 to-accent-700 p-5 sm:p-6 rounded-3xl shadow-xl text-white group">
+                    class="relative overflow-hidden bg-aurora-gradient p-5 sm:p-6 rounded-3xl shadow-glow-violet-lg text-white group">
                     <div
                         class="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-white/10 blur-2xl group-hover:bg-white/20 transition-all duration-500">
                     </div>
@@ -344,9 +344,9 @@
                             Profit</span>
                     </div>
                     <div class="relative z-10">
-                        <p class="text-primary-100 text-xs font-semibold uppercase tracking-wider mb-1">Profit / Loss</p>
+                        <p class="text-white/80 text-xs font-semibold uppercase tracking-wider mb-1">Profit / Loss</p>
                         <h3
-                            class="text-2xl sm:text-3xl lg:text-4xl font-bold {{ $stats['profit'] >= 0 ? 'text-white' : 'text-rose-200' }}">
+                            class="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">
                             {{ $stats['profit'] >= 0 ? '+' : '' }}₹{{ number_format($stats['profit']) }}
                         </h3>
                     </div>
@@ -354,26 +354,26 @@
             </div>
 
             <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
-                <h2 class="text-lg sm:text-xl font-bold text-stone-900 dark:text-white flex items-center gap-2 whitespace-nowrap">
+                <h2 class="text-lg sm:text-xl font-bold text-ink-900 dark:text-white flex items-center gap-2 whitespace-nowrap">
                     Transactions
                     <span
-                        class="text-xs font-semibold bg-stone-100 dark:bg-stone-800 text-stone-500 px-2.5 py-1 rounded-lg border border-stone-200 dark:border-stone-700">{{ count($transactions) }}</span>
+                        class="text-xs font-semibold bg-ink-100 dark:bg-ink-800 text-ink-500 px-2.5 py-1 rounded-lg border border-ink-200/70 dark:border-ink-700/70">{{ count($transactions) }}</span>
                 </h2>
 
                 <div class="w-full md:w-auto overflow-x-auto no-scrollbar pb-1">
                     <div class="flex items-center gap-2 min-w-max">
                         <div
-                            class="bg-white dark:bg-stone-800 p-1 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm inline-flex">
+                            class="bg-white/70 dark:bg-ink-900/50 glass-panel p-1 rounded-xl border border-ink-200/70 dark:border-ink-800/70 shadow-glass inline-flex">
                             <a href="{{ route('dashboard', array_merge(request()->except('type'), ['type' => 'all'])) }}"
-                                class="px-4 py-2 text-xs font-semibold uppercase rounded-lg transition-all {{ $currentFilters['type'] === 'all' ? 'bg-stone-900 dark:bg-primary-600 text-white shadow' : 'text-stone-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-700' }}">
+                                class="px-4 py-2 text-xs font-semibold uppercase rounded-lg transition-all {{ $currentFilters['type'] === 'all' ? 'bg-aurora-gradient text-white shadow' : 'text-ink-500 dark:text-ink-400 hover:bg-ink-100/70 dark:hover:bg-ink-800/60' }}">
                                 All
                             </a>
                             <a href="{{ route('dashboard', array_merge(request()->except('type'), ['type' => 'sale'])) }}"
-                                class="px-4 py-2 text-xs font-semibold uppercase rounded-lg transition-all {{ $currentFilters['type'] === 'sale' ? 'bg-primary-600 text-white shadow' : 'text-stone-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-700' }}">
+                                class="px-4 py-2 text-xs font-semibold uppercase rounded-lg transition-all {{ $currentFilters['type'] === 'sale' ? 'bg-mint-500 text-white shadow' : 'text-ink-500 dark:text-ink-400 hover:bg-ink-100/70 dark:hover:bg-ink-800/60' }}">
                                 Income
                             </a>
                             <a href="{{ route('dashboard', array_merge(request()->except('type'), ['type' => 'expense'])) }}"
-                                class="px-4 py-2 text-xs font-semibold uppercase rounded-lg transition-all {{ $currentFilters['type'] === 'expense' ? 'bg-rose-500 text-white shadow' : 'text-stone-500 dark:text-stone-400 hover:bg-stone-50 dark:hover:bg-stone-700' }}">
+                                class="px-4 py-2 text-xs font-semibold uppercase rounded-lg transition-all {{ $currentFilters['type'] === 'expense' ? 'bg-rose-500 text-white shadow' : 'text-ink-500 dark:text-ink-400 hover:bg-ink-100/70 dark:hover:bg-ink-800/60' }}">
                                 Expense
                             </a>
                         </div>
@@ -382,7 +382,7 @@
                             <div class="relative">
                                 <select
                                     onchange="window.location.href = '{{ route('dashboard') }}?' + new URLSearchParams({...Object.fromEntries(new URLSearchParams(window.location.search)), category: this.value})"
-                                    class="appearance-none pl-4 pr-10 py-2.5 text-xs font-semibold rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-200 focus:border-primary-500 focus:ring-0 shadow-sm cursor-pointer hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors h-[42px]">
+                                    class="appearance-none pl-4 pr-10 py-2.5 text-xs font-semibold rounded-xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-800/60 text-ink-700 dark:text-ink-200 focus:border-aurora-violet focus:ring-0 shadow-glass cursor-pointer hover:bg-ink-50 dark:hover:bg-ink-800 transition-colors h-[42px]">
                                     <option value="all"
                                         {{ request('category', 'all') === 'all' ? 'selected' : '' }}>All Categories
                                     </option>
@@ -398,7 +398,7 @@
                                         Other</option>
                                 </select>
                                 <div
-                                    class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-stone-500">
+                                    class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-ink-500">
                                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M19 9l-7 7-7-7"></path>
@@ -408,7 +408,7 @@
                         @endif
 
                         <a href="{{ route('transactions.export', request()->all()) }}"
-                            class="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 hover:bg-stone-50 dark:hover:bg-stone-700 hover:text-primary-600 dark:hover:text-primary-400 shadow-sm transition-all h-[42px]">
+                            class="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-xl bg-white/70 dark:bg-ink-900/50 glass-panel border border-ink-200/70 dark:border-ink-800/70 text-ink-700 dark:text-ink-200 hover:border-aurora-violet/40 hover:text-aurora-violet dark:hover:text-fuchsia-400 shadow-glass transition-all h-[42px]">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
@@ -430,23 +430,23 @@
                     @if ($currentDate !== $dateStr)
                         @php $currentDate = $dateStr; @endphp
                         <div class="flex items-center gap-4 pt-2">
-                            <div class="h-px bg-stone-200 dark:bg-stone-700 flex-1"></div>
+                            <div class="h-px bg-ink-200 dark:bg-ink-800 flex-1"></div>
                             <span
-                                class="text-xs font-semibold text-stone-400 dark:text-stone-500 uppercase tracking-widest">
+                                class="text-xs font-semibold text-ink-400 dark:text-ink-500 uppercase tracking-widest">
                                 {{ $dateObj->isToday() ? 'Today' : ($dateObj->isYesterday() ? 'Yesterday' : $dateObj->format('M d, Y')) }}
                             </span>
-                            <div class="h-px bg-stone-200 dark:bg-stone-700 flex-1"></div>
+                            <div class="h-px bg-ink-200 dark:bg-ink-800 flex-1"></div>
                         </div>
                     @endif
 
                     <div
-                        class="group bg-white dark:bg-stone-800 p-3 sm:p-4 rounded-2xl border border-stone-200 dark:border-stone-700 hover:border-primary-300 dark:hover:border-primary-600 shadow-sm hover:shadow-md transition-all duration-200 flex flex-wrap items-center justify-between gap-3">
+                        class="group bg-white/70 dark:bg-ink-900/50 glass-panel p-3 sm:p-4 rounded-2xl border border-ink-200/70 dark:border-ink-800/70 hover:border-aurora-violet/40 shadow-glass hover:shadow-glow-violet transition-all duration-200 flex flex-wrap items-center justify-between gap-3">
                         <div class="flex items-center gap-3 sm:gap-4 min-w-0">
                             <div
                                 class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors
                                 {{ $t->type == 'sale'
-                                    ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 border border-primary-100 dark:border-primary-800/30'
-                                    : 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-800/30' }}">
+                                    ? 'bg-mint-50 dark:bg-mint-500/10 text-mint-500 border border-mint-100 dark:border-mint-500/20'
+                                    : 'bg-rose-50 dark:bg-rose-500/10 text-rose-500 border border-rose-100 dark:border-rose-500/20' }}">
                                 @if ($t->type == 'sale')
                                     <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -461,11 +461,11 @@
                             </div>
 
                             <div class="min-w-0">
-                                <p class="font-semibold text-stone-900 dark:text-white text-sm truncate">
+                                <p class="font-semibold text-ink-900 dark:text-white text-sm truncate">
                                     {{ $t->description }}</p>
                                 <div class="flex items-center gap-2 mt-0.5">
                                     <span
-                                        class="text-xs font-medium px-2 py-0.5 rounded bg-stone-100 dark:bg-stone-700 text-stone-500 dark:text-stone-400">
+                                        class="text-xs font-medium px-2 py-0.5 rounded bg-ink-100 dark:bg-ink-800 text-ink-500 dark:text-ink-400">
                                         {{ $t->category }}
                                     </span>
                                 </div>
@@ -474,7 +474,7 @@
 
                         <div class="flex items-center gap-3 sm:gap-4 ml-auto">
                             <span
-                                class="block font-bold text-base sm:text-lg whitespace-nowrap {{ $t->type == 'sale' ? 'text-primary-600 dark:text-primary-400' : 'text-stone-900 dark:text-white' }}">
+                                class="block font-bold text-base sm:text-lg whitespace-nowrap {{ $t->type == 'sale' ? 'text-mint-500' : 'text-ink-900 dark:text-white' }}">
                                 {{ $t->type == 'sale' ? '+' : '-' }}₹{{ number_format($t->amount) }}
                             </span>
 
@@ -488,7 +488,7 @@
                                         'description' => $t->description,
                                         'category' => $t->category,
                                     ]) }})"
-                                    class="p-2.5 sm:p-2 rounded-lg text-stone-400 dark:text-stone-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 active:bg-primary-100 dark:active:bg-primary-900/50 transition-all"
+                                    class="p-2.5 sm:p-2 rounded-lg text-ink-400 dark:text-ink-500 hover:text-aurora-violet hover:bg-aurora-gradient-soft active:brightness-95 transition-all"
                                     title="Edit entry" aria-label="Edit entry">
                                     <span class="sr-only">Edit entry</span>
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -503,7 +503,7 @@
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit"
-                                        class="p-2.5 sm:p-2 rounded-lg text-stone-400 dark:text-stone-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 active:bg-rose-100 dark:active:bg-rose-900/50 transition-all"
+                                        class="p-2.5 sm:p-2 rounded-lg text-ink-400 dark:text-ink-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 active:bg-rose-100 dark:active:bg-rose-500/20 transition-all"
                                         title="Delete entry" aria-label="Delete entry">
                                         <span class="sr-only">Delete entry</span>
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -519,16 +519,16 @@
                 @empty
                     <div class="text-center py-16 sm:py-20">
                         <div
-                            class="w-20 h-20 bg-stone-50 dark:bg-stone-800 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <svg class="w-10 h-10 text-stone-300 dark:text-stone-600" fill="none"
+                            class="w-20 h-20 bg-aurora-gradient-soft rounded-full flex items-center justify-center mx-auto mb-6">
+                            <svg class="w-10 h-10 text-aurora-violet dark:text-fuchsia-400" fill="none"
                                 stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
                                 </path>
                             </svg>
                         </div>
-                        <h3 class="text-lg font-bold text-stone-900 dark:text-white mb-2">No transactions found</h3>
-                        <p class="text-stone-500 dark:text-stone-400">Try adjusting your filters or add a new
+                        <h3 class="text-lg font-bold text-ink-900 dark:text-white mb-2">No transactions found</h3>
+                        <p class="text-ink-500 dark:text-ink-400">Try adjusting your filters or add a new
                             transaction.</p>
                     </div>
                 @endforelse
@@ -548,7 +548,7 @@
 
         <div x-show="showModal" style="display: none;" class="fixed inset-0 z-[60]">
             <div x-show="showModal" x-transition.opacity @click="closeModal()"
-                class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm"></div>
+                class="fixed inset-0 bg-ink-950/70 backdrop-blur-sm"></div>
 
             <div class="fixed inset-0 z-[60] overflow-y-auto flex items-end sm:items-center justify-center">
                 <div class="w-full sm:p-4">
@@ -558,17 +558,17 @@
                         x-transition:leave="transition ease-in duration-200"
                         x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
                         x-transition:leave-end="opacity-0 translate-y-8 sm:translate-y-4 sm:scale-95"
-                        class="w-full sm:max-w-md sm:mx-auto bg-white dark:bg-stone-900 rounded-t-3xl sm:rounded-3xl shadow-2xl border border-stone-200 dark:border-stone-800 overflow-hidden max-h-[92vh] overflow-y-auto">
+                        class="w-full sm:max-w-md sm:mx-auto bg-white/90 dark:bg-ink-850/90 glass-panel rounded-t-3xl sm:rounded-3xl shadow-glass border border-ink-200/70 dark:border-ink-700/70 overflow-hidden max-h-[92vh] overflow-y-auto">
 
                         <div class="sm:hidden flex justify-center pt-3 pb-1">
-                            <div class="w-10 h-1.5 rounded-full bg-stone-300 dark:bg-stone-700"></div>
+                            <div class="w-10 h-1.5 rounded-full bg-ink-300 dark:bg-ink-700"></div>
                         </div>
 
                         <div
-                            class="px-6 sm:px-8 py-5 sm:py-6 border-b border-stone-100 dark:border-stone-800 flex justify-between items-center bg-stone-50/50 dark:bg-stone-800/50">
-                            <h3 class="text-lg sm:text-xl font-bold text-stone-900 dark:text-white" x-text="modalTitle()"></h3>
+                            class="px-6 sm:px-8 py-5 sm:py-6 border-b border-ink-100 dark:border-ink-800 flex justify-between items-center">
+                            <h3 class="text-lg sm:text-xl font-bold text-ink-900 dark:text-white" x-text="modalTitle()"></h3>
                             <button @click="closeModal()"
-                                class="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 transition-colors">
+                                class="text-ink-400 hover:text-ink-600 dark:hover:text-ink-200 transition-colors">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M6 18L18 6M6 6l12 12"></path>
@@ -578,7 +578,7 @@
 
                         @if ($errors->any())
                             <div
-                                class="mx-6 sm:mx-8 mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/40 dark:text-rose-200">
+                                class="mx-6 sm:mx-8 mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">
                                 <p class="font-semibold">Please fix the highlighted details and try again.</p>
                                 <ul class="mt-2 space-y-1">
                                     @foreach ($errors->all() as $error)
@@ -599,18 +599,18 @@
                             <input type="hidden" name="type" x-model="form.type">
                             <input type="hidden" name="category" :value="form.type === 'sale' ? 'Sales' : form.category">
 
-                            <div class="grid grid-cols-2 gap-2 p-1 bg-stone-100 dark:bg-stone-800 rounded-2xl">
+                            <div class="grid grid-cols-2 gap-2 p-1 bg-ink-100 dark:bg-ink-800 rounded-2xl">
                                 <button type="button" @click="form.type = 'sale'; syncCategoryWithType()"
                                     :class="form.type === 'sale' ?
-                                        'bg-white dark:bg-stone-700 text-primary-600 shadow-sm' :
-                                        'text-stone-500 dark:text-stone-400 hover:text-stone-700'"
+                                        'bg-white dark:bg-ink-700 text-mint-500 shadow-sm' :
+                                        'text-ink-500 dark:text-ink-400 hover:text-ink-700 dark:hover:text-ink-200'"
                                     class="py-3 text-sm font-semibold rounded-xl transition-all duration-200">
                                     Income
                                 </button>
                                 <button type="button" @click="form.type = 'expense'; syncCategoryWithType()"
                                     :class="form.type === 'expense' ?
-                                        'bg-white dark:bg-stone-700 text-rose-600 shadow-sm' :
-                                        'text-stone-500 dark:text-stone-400 hover:text-stone-700'"
+                                        'bg-white dark:bg-ink-700 text-rose-500 shadow-sm' :
+                                        'text-ink-500 dark:text-ink-400 hover:text-ink-700 dark:hover:text-ink-200'"
                                     class="py-3 text-sm font-semibold rounded-xl transition-all duration-200">
                                     Expense
                                 </button>
@@ -618,37 +618,37 @@
 
                             <div>
                                 <label
-                                    class="block text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-2">Amount</label>
+                                    class="block text-xs font-semibold text-ink-500 dark:text-ink-400 uppercase tracking-wider mb-2">Amount</label>
                                 <div class="relative group">
                                     <span
-                                        class="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 font-bold text-lg group-focus-within:text-primary-500 transition-colors">₹</span>
+                                        class="absolute left-4 top-1/2 -translate-y-1/2 text-ink-400 font-bold text-lg group-focus-within:text-aurora-violet transition-colors">₹</span>
                                     <input type="number" name="amount" x-model="form.amount" required step="0.01"
                                         placeholder="0.00"
-                                        class="w-full pl-10 pr-4 py-4 text-2xl font-bold rounded-2xl bg-stone-50 dark:bg-stone-800/50 border border-stone-200 dark:border-stone-700 text-stone-900 dark:text-white focus:border-primary-500 focus:ring-0 transition-all placeholder-stone-300">
+                                        class="w-full pl-10 pr-4 py-4 text-2xl font-bold rounded-2xl bg-ink-50 dark:bg-ink-800/60 border border-ink-200 dark:border-ink-700 text-ink-900 dark:text-white focus:border-aurora-violet focus:ring-0 transition-all placeholder-ink-300 dark:placeholder-ink-600">
                                 </div>
                             </div>
 
                             <div class="space-y-4">
                                 <div>
                                     <label
-                                        class="block text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-2">Date</label>
+                                        class="block text-xs font-semibold text-ink-500 dark:text-ink-400 uppercase tracking-wider mb-2">Date</label>
                                     <input type="date" name="date" x-model="form.date" required
-                                        class="w-full px-4 py-3 font-medium rounded-xl bg-stone-50 dark:bg-stone-800/50 border border-stone-200 dark:border-stone-700 text-stone-900 dark:text-white focus:border-primary-500 focus:ring-0 transition-all">
+                                        class="w-full px-4 py-3 font-medium rounded-xl bg-ink-50 dark:bg-ink-800/60 border border-ink-200 dark:border-ink-700 text-ink-900 dark:text-white focus:border-aurora-violet focus:ring-0 transition-all">
                                 </div>
                                 <div>
                                     <label
-                                        class="block text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-2">Description</label>
+                                        class="block text-xs font-semibold text-ink-500 dark:text-ink-400 uppercase tracking-wider mb-2">Description</label>
                                     <input type="text" name="description" x-model="form.description" required
                                         placeholder="What was this for?"
-                                        class="w-full px-4 py-3 font-medium rounded-xl bg-stone-50 dark:bg-stone-800/50 border border-stone-200 dark:border-stone-700 text-stone-900 dark:text-white focus:border-primary-500 focus:ring-0 transition-all placeholder-stone-400">
+                                        class="w-full px-4 py-3 font-medium rounded-xl bg-ink-50 dark:bg-ink-800/60 border border-ink-200 dark:border-ink-700 text-ink-900 dark:text-white focus:border-aurora-violet focus:ring-0 transition-all placeholder-ink-400 dark:placeholder-ink-600">
                                 </div>
                             </div>
 
                             <div x-show="form.type === 'expense'" x-transition>
                                 <label
-                                    class="block text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-2">Category</label>
+                                    class="block text-xs font-semibold text-ink-500 dark:text-ink-400 uppercase tracking-wider mb-2">Category</label>
                                 <select x-model="form.category"
-                                    class="w-full px-4 py-3 font-medium rounded-xl bg-stone-50 dark:bg-stone-800/50 border border-stone-200 dark:border-stone-700 text-stone-900 dark:text-white focus:border-primary-500 focus:ring-0 transition-all">
+                                    class="w-full px-4 py-3 font-medium rounded-xl bg-ink-50 dark:bg-ink-800/60 border border-ink-200 dark:border-ink-700 text-ink-900 dark:text-white focus:border-aurora-violet focus:ring-0 transition-all">
                                     @foreach ($expenseCategories as $expenseCategory)
                                         <option value="{{ $expenseCategory }}">{{ $expenseCategory }}</option>
                                     @endforeach
@@ -657,8 +657,8 @@
 
                             <div class="pt-2 safe-bottom">
                                 <button type="submit" :disabled="submitting"
-                                    :class="submitting ? 'opacity-70 cursor-not-allowed' : 'hover:bg-primary-700 active:scale-[0.98]'"
-                                    class="w-full py-4 rounded-xl font-semibold text-white bg-primary-600 shadow-brand transition-all transform flex items-center justify-center gap-2">
+                                    :class="submitting ? 'opacity-70 cursor-not-allowed' : 'hover:brightness-110 active:scale-[0.98]'"
+                                    class="w-full py-4 rounded-xl font-semibold text-white bg-aurora-gradient shadow-glow-violet transition-all transform flex items-center justify-center gap-2">
                                     <svg x-show="submitting" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>

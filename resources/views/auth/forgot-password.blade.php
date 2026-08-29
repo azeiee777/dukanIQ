@@ -1,13 +1,13 @@
 ﻿<x-guest-layout>
     <div class="text-center mb-8">
         <a href="/"
-            class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-primary-600 to-accent-600 text-white shadow-lg shadow-primary-500/30 mb-5 hover:scale-105 transition-transform duration-200">
+            class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-aurora-gradient text-white shadow-glow-violet mb-5 hover:scale-105 transition-transform duration-200">
             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
         </a>
-        <h2 class="text-2xl font-semibold text-stone-900 dark:text-white tracking-tight">Reset Password</h2>
-        <p class="text-stone-500 dark:text-stone-400 text-sm mt-2 max-w-sm mx-auto">
+        <h2 class="text-2xl font-semibold text-ink-900 dark:text-white tracking-tight">Reset Password</h2>
+        <p class="text-ink-500 dark:text-ink-400 text-sm mt-2 max-w-sm mx-auto">
             Forgot your password? No problem. Just let us know your email address and we will email you a password reset
             link.
         </p>
@@ -29,19 +29,19 @@
 
         <div>
             <label for="email"
-                class="block text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wide mb-1.5 ml-1">
+                class="block text-xs font-semibold text-ink-500 dark:text-ink-400 uppercase tracking-wide mb-1.5 ml-1">
                 Email Address
             </label>
             <div class="relative group">
                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <svg class="h-5 w-5 text-stone-400 group-focus-within:text-primary-500 transition-colors duration-200"
+                    <svg class="h-5 w-5 text-ink-400 group-focus-within:text-violet-500 transition-colors duration-200"
                         fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
                     </svg>
                 </div>
                 <input id="email" type="email" name="email" :value="old('email')" required autofocus
-                    class="w-full pl-10 pr-4 py-3 bg-stone-50 dark:bg-stone-900/50 border border-stone-200 dark:border-stone-700 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:focus:border-primary-400 text-stone-900 dark:text-white placeholder-stone-400 dark:placeholder-stone-500 transition-all duration-200 sm:text-sm"
+                    class="w-full pl-10 pr-4 py-3 bg-ink-50 dark:bg-ink-900/50 border border-ink-200 dark:border-ink-700 rounded-xl focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 dark:focus:border-violet-400 text-ink-900 dark:text-white placeholder-ink-400 dark:placeholder-ink-500 transition-all duration-200 sm:text-sm"
                     placeholder="you@example.com">
             </div>
             @error('email')
@@ -57,14 +57,14 @@
 
         <div class="pt-2">
             <button type="submit"
-                class="w-full py-3 px-4 rounded-xl font-semibold text-white bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-400 shadow-lg shadow-primary-500/30 dark:shadow-primary-900/50 transition-all duration-200 transform hover:scale-[1.01] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-stone-900">
+                class="w-full py-3 px-4 rounded-xl font-semibold text-white bg-aurora-gradient hover:brightness-110 shadow-glow-violet transition-all duration-200 transform hover:scale-[1.01] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-aurora-violet dark:focus:ring-offset-ink-900">
                 Email Password Reset Link
             </button>
         </div>
 
-        <div class="text-center pt-6 border-t border-stone-100 dark:border-stone-700/50 mt-6">
+        <div class="text-center pt-6 border-t border-ink-100 dark:border-ink-700/50 mt-6">
             <a href="{{ route('login') }}"
-                class="inline-flex items-center gap-2 text-sm font-semibold text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 transition-colors">
+                class="inline-flex items-center gap-2 text-sm font-semibold text-ink-500 dark:text-ink-400 hover:text-ink-800 dark:hover:text-ink-200 transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
