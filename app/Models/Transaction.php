@@ -21,6 +21,8 @@ class Transaction extends Model
         'category',    // Nullable category
         'description',
         'date',
+        'product_id',  // Optional link to a stock item (sales only)
+        'quantity',    // Units sold, when linked to a product
     ];
 
     /**
@@ -31,6 +33,7 @@ class Transaction extends Model
     protected $casts = [
         'date' => 'date',           // Casts to Carbon instance
         'amount' => 'decimal:2',    // Ensures 2 decimal places
+        'quantity' => 'integer',
     ];
 
     /**
@@ -39,5 +42,18 @@ class Transaction extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * The stock item this sale was fulfilled from, if any.
+     */
+    public function product()
+    {
+        return $this->belongsTo(Product::class);
+    }
+
+    public function stockMovement()
+    {
+        return $this->hasOne(StockMovement::class);
     }
 }
